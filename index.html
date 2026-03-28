@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>工作日志管理系统</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --primary:#1677ff;--primary-light:#e6f4ff;
+  --success:#52c41a;--warning:#faad14;--danger:#ff4d4f;
+  --purple:#722ed1;--purple-light:#f9f0ff;
+  --orange:#fa8c16;--orange-light:#fff7e6;
+  --text:#1f2329;--text-sub:#646a73;--text-dis:#bbbfc4;
+  --border:#e4e9f0;--bg:#f5f7fa;--nav-h:56px;--sw:250px;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg);color:var(--text);font-size:14px;}
+.nav{position:fixed;top:0;left:0;right:0;height:var(--nav-h);background:#fff;border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;z-index:100;box-shadow:0 1px 4px rgba(0,0,0,.06);}
+.nav-logo{font-size:16px;font-weight:700;color:var(--primary);display:flex;align-items:center;gap:8px;}
+.nav-logo svg{width:22px;height:22px;}
+.nav-tabs{display:flex;gap:4px;margin-left:40px;}
+.nav-tab{padding:6px 16px;border-radius:6px;cursor:pointer;font-size:14px;color:var(--text-sub);transition:all .2s;}
+.nav-tab:hover{background:var(--bg);color:var(--text);}
+.nav-tab.active{background:var(--primary-light);color:var(--primary);font-weight:500;}
+.nav-right{margin-left:auto;display:flex;align-items:center;gap:10px;position:relative;}
+.role-badge-nav{padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;}
+.user-avatar{width:32px;height:32px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;cursor:pointer;}
+.user-info{font-size:13px;color:var(--text-sub);}
+.main{margin-top:var(--nav-h);padding:24px;min-height:calc(100vh - var(--nav-h));}
+.page{display:none;}.page.active{display:block;}
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:500;}
+.badge-success{background:#f6ffed;color:var(--success);border:1px solid #b7eb8f;}
+.badge-warning{background:#fffbe6;color:var(--warning);border:1px solid #ffe58f;}
+.badge-default{background:#f5f5f5;color:#8c8c8c;border:1px solid #d9d9d9;}
+.badge-primary{background:var(--primary-light);color:var(--primary);border:1px solid #91caff;}
+.badge-purple{background:var(--purple-light);color:var(--purple);border:1px solid #d3adf7;}
+.badge-orange{background:var(--orange-light);color:var(--orange);border:1px solid #ffd591;}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 16px;border-radius:6px;border:1px solid var(--border);cursor:pointer;font-size:13px;font-weight:500;transition:all .2s;background:#fff;color:var(--text);}
+.btn:hover{border-color:var(--primary);color:var(--primary);}
+.btn-primary{background:var(--primary);color:#fff;border-color:var(--primary);}
+.btn-primary:hover{background:#4096ff;color:#fff;}
+.btn-success{background:var(--success);color:#fff;border-color:var(--success);}
+.btn-success:hover{background:#73d13d;color:#fff;}
+.btn-danger{background:#fff;color:var(--danger);border-color:var(--danger);}
+.btn-danger:hover{background:var(--danger);color:#fff;}
+.btn-sm{padding:4px 10px;font-size:12px;}
+.btn-group{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.overview-header{background:#fff;border-radius:10px;border:1px solid var(--border);padding:16px 20px;margin-bottom:16px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
+.week-title{font-size:16px;font-weight:700;}.week-sub{font-size:13px;color:var(--text-sub);}
+.week-nav{display:flex;gap:6px;}.week-nav .btn{padding:5px 12px;}
+.type-tabs{display:flex;background:var(--bg);border-radius:8px;padding:3px;}
+.type-tab{padding:5px 14px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:500;color:var(--text-sub);transition:all .2s;}
+.type-tab.active{background:#fff;color:var(--primary);box-shadow:0 1px 4px rgba(0,0,0,.1);}
+.team-filter-bar{background:#fff;border-radius:10px;border:1px solid var(--border);padding:12px 20px;margin-bottom:16px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.team-filter-label{font-size:13px;color:var(--text-sub);flex-shrink:0;}
+.team-tab{padding:4px 14px;border-radius:16px;cursor:pointer;font-size:13px;font-weight:500;border:1px solid var(--border);color:var(--text-sub);background:#fff;transition:all .2s;}
+.team-tab:hover{border-color:var(--primary);color:var(--primary);}
+.team-tab.active{background:var(--primary);color:#fff;border-color:var(--primary);}
+.overview-body{display:flex;gap:16px;}
+.member-list{width:var(--sw);flex-shrink:0;background:#fff;border-radius:10px;border:1px solid var(--border);overflow:hidden;}
+.member-list-header{padding:12px 16px;border-bottom:1px solid var(--border);font-weight:600;font-size:13px;color:var(--text-sub);display:flex;align-items:center;justify-content:space-between;}
+#memberListAll{border-bottom:1px solid var(--border);}
+.member-item{display:flex;align-items:center;padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--border);transition:background .15s;gap:10px;}
+.member-item:last-child{border-bottom:none;}
+.member-item:hover{background:var(--bg);}
+.member-item.active{background:var(--primary-light);}
+.member-avatar{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:#fff;flex-shrink:0;}
+.member-name{font-size:13px;font-weight:500;}
+.member-check{font-size:12px;flex-shrink:0;}
+.progress-wrap{display:flex;align-items:center;gap:5px;margin-top:4px;}
+.progress-bar{flex:1;height:4px;background:#eef0f3;border-radius:3px;overflow:hidden;}
+.progress-fill{height:100%;border-radius:3px;transition:width .4s ease;}
+.progress-text{font-size:10px;color:var(--text-sub);flex-shrink:0;min-width:24px;text-align:right;}
+.content-area{flex:1;min-width:0;}
+.timeline-day{margin-bottom:20px;}
+.timeline-date{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+.timeline-date-dot{width:8px;height:8px;border-radius:50%;background:var(--primary);flex-shrink:0;}
+.timeline-date-text{font-size:14px;font-weight:600;}.timeline-date-week{font-size:12px;color:var(--text-sub);}
+.timeline-entries{margin-left:18px;display:flex;flex-direction:column;gap:8px;}
+.timeline-entry{background:#fff;border:1px solid var(--border);border-radius:8px;padding:12px 16px;transition:box-shadow .2s;}
+.timeline-entry:hover{box-shadow:0 2px 8px rgba(0,0,0,.08);}
+.entry-header{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.entry-name{font-size:13px;font-weight:600;}
+.entry-content{font-size:13px;color:var(--text-sub);line-height:1.6;}
+.entry-content p{margin-bottom:2px;}
+.weekly-card{background:#fff;border:1px solid var(--border);border-radius:10px;margin-bottom:16px;overflow:hidden;}
+.weekly-card-header{display:flex;align-items:center;padding:14px 20px;border-bottom:1px solid var(--border);gap:10px;}
+.weekly-card-name{font-weight:600;font-size:15px;}.weekly-card-time{font-size:12px;color:var(--text-sub);margin-left:auto;}
+.weekly-card-body{padding:16px 20px;}
+.weekly-card-section-title{font-weight:600;margin-bottom:8px;color:var(--text);}
+.weekly-card-body ul{padding-left:18px;}
+.weekly-card-body li{margin-bottom:4px;line-height:1.6;color:var(--text-sub);font-size:13px;}
+.weekly-card-overview{font-size:13px;color:var(--text-sub);line-height:1.8;margin-bottom:12px;}
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px;}
+.page-title{font-size:20px;font-weight:700;}
+.filter-bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:#fff;border-radius:10px;border:1px solid var(--border);padding:14px 20px;margin-bottom:16px;}
+.filter-label{font-size:13px;color:var(--text-sub);}
+select,input[type="date"],input[type="text"]{padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;color:var(--text);background:#fff;outline:none;transition:border-color .2s;}
+select:focus,input:focus{border-color:var(--primary);}
+.log-card{background:#fff;border:1px solid var(--border);border-radius:10px;margin-bottom:12px;overflow:hidden;transition:box-shadow .2s;}
+.log-card:hover{box-shadow:0 2px 10px rgba(0,0,0,.08);}
+.log-card-header{display:flex;align-items:center;padding:12px 18px;border-bottom:1px solid var(--border);gap:10px;background:var(--bg);}
+.log-date{font-weight:600;font-size:14px;}.log-weekday{font-size:12px;color:var(--text-sub);}.log-author{font-size:12px;color:var(--text-sub);margin-left:auto;}
+.log-card-body{padding:14px 18px;}.log-content{font-size:13px;line-height:1.8;color:var(--text);white-space:pre-wrap;}
+.log-card-footer{display:flex;align-items:center;padding:10px 18px;border-top:1px solid var(--border);gap:8px;}
+.log-update-time{font-size:11px;color:var(--text-dis);margin-left:auto;}
+.weekly-status-bar{display:flex;align-items:center;gap:12px;background:#fff;border-radius:10px;border:1px solid var(--border);padding:14px 20px;margin-bottom:16px;flex-wrap:wrap;}
+.status-week{font-weight:600;font-size:15px;}
+.weekly-report-card{background:#fff;border:1px solid var(--border);border-radius:10px;overflow:hidden;}
+.weekly-report-header{display:flex;align-items:center;padding:16px 20px;border-bottom:1px solid var(--border);gap:10px;}
+.weekly-report-body{padding:20px;}
+.report-section{margin-bottom:20px;}
+.report-section-title{font-weight:600;font-size:14px;margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+.report-section-title::before{content:'';display:block;width:3px;height:14px;background:var(--primary);border-radius:2px;}
+.report-overview-text{font-size:13px;line-height:1.8;color:var(--text-sub);}
+.report-item-list{list-style:none;}
+.report-item-list li{display:flex;align-items:flex-start;gap:8px;padding:6px 0;border-bottom:1px dashed var(--border);font-size:13px;color:var(--text-sub);line-height:1.6;}
+.report-item-list li:last-child{border-bottom:none;}
+.report-item-num{width:20px;height:20px;border-radius:50%;background:var(--primary-light);color:var(--primary);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;}
+.report-footer{padding:16px 20px;border-top:1px solid var(--border);display:flex;gap:10px;flex-wrap:wrap;}
+.generating-animation{display:flex;align-items:center;gap:12px;padding:40px 20px;justify-content:center;color:var(--text-sub);}
+.spinner{width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.admin-section{background:#fff;border-radius:10px;border:1px solid var(--border);margin-bottom:20px;overflow:hidden;}
+.admin-section-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.admin-section-title{font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px;}
+.admin-table{width:100%;border-collapse:collapse;}
+.admin-table th{padding:10px 16px;background:var(--bg);font-size:12px;color:var(--text-sub);font-weight:600;text-align:left;border-bottom:1px solid var(--border);}
+.admin-table td{padding:12px 16px;border-bottom:1px solid var(--border);font-size:13px;vertical-align:middle;}
+.admin-table tr:last-child td{border-bottom:none;}
+.admin-table tr:hover td{background:var(--bg);}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;z-index:1000;opacity:0;pointer-events:none;transition:opacity .2s;}
+.modal-overlay.open{opacity:1;pointer-events:auto;}
+.modal{background:#fff;border-radius:12px;width:600px;max-width:95vw;max-height:90vh;overflow:auto;box-shadow:0 10px 40px rgba(0,0,0,.15);transform:translateY(20px);transition:transform .2s;}
+.modal-overlay.open .modal{transform:translateY(0);}
+.modal-header{display:flex;align-items:center;padding:18px 24px;border-bottom:1px solid var(--border);}
+.modal-title{font-size:16px;font-weight:700;flex:1;}
+.modal-close{width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;border-radius:6px;color:var(--text-sub);font-size:18px;}
+.modal-close:hover{background:var(--bg);}
+.modal-body{padding:24px;}.modal-footer{padding:16px 24px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end;}
+.form-group{margin-bottom:18px;}.form-label{font-size:13px;font-weight:600;margin-bottom:6px;display:block;}
+.form-label .required{color:var(--danger);}
+textarea{width:100%;min-height:140px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;line-height:1.7;resize:vertical;font-family:inherit;outline:none;transition:border .2s;}
+textarea:focus{border-color:var(--primary);}
+.char-count{font-size:11px;color:var(--text-sub);text-align:right;margin-top:4px;}
+input[type="text"].full{width:100%;}
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;color:var(--text-sub);gap:12px;}
+.empty-state svg{width:48px;height:48px;opacity:.3;}.empty-state p{font-size:14px;}
+.toast-container{position:fixed;top:72px;right:24px;z-index:2000;display:flex;flex-direction:column;gap:8px;}
+.toast{background:#fff;border:1px solid var(--border);border-radius:8px;padding:12px 16px;box-shadow:0 4px 16px rgba(0,0,0,.12);display:flex;align-items:center;gap:10px;font-size:13px;animation:slideIn .3s ease;min-width:240px;}
+.toast.success{border-left:3px solid var(--success);}.toast.error{border-left:3px solid var(--danger);}.toast.info{border-left:3px solid var(--primary);}
+@keyframes slideIn{from{transform:translateX(100%);opacity:0;}to{transform:translateX(0);opacity:1;}}
+.history-week-item{display:flex;align-items:center;padding:12px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s;gap:12px;}
+.history-week-item:hover{background:var(--bg);}.history-week-item:last-child{border-bottom:none;}
+.history-week-label{flex:1;font-size:13px;font-weight:500;}.history-week-sub{font-size:12px;color:var(--text-sub);}
+@media(max-width:768px){.overview-body{flex-direction:column;}.member-list{width:100%;}.nav-tabs{display:none;}}
+.ml-auto{margin-left:auto;}.text-sub{color:var(--text-sub);font-size:13px;}.text-sm{font-size:12px;}
+/* ===== LOGIN PAGE ===== */
+.login-overlay{position:fixed;inset:0;background:linear-gradient(135deg,#e6f4ff 0%,#f0f5ff 50%,#f9f0ff 100%);display:flex;align-items:center;justify-content:center;z-index:9999;}
+.login-overlay.hidden{display:none;}
+.login-card{background:#fff;border-radius:16px;box-shadow:0 8px 40px rgba(22,119,255,.12);padding:48px 44px;width:420px;max-width:95vw;}
+.login-logo{display:flex;align-items:center;gap:10px;margin-bottom:32px;}
+.login-logo svg{width:32px;height:32px;color:var(--primary);}
+.login-logo-text{font-size:20px;font-weight:800;color:var(--text);}
+.login-logo-sub{font-size:13px;color:var(--text-sub);margin-top:2px;}
+.login-title{font-size:22px;font-weight:700;color:var(--text);margin-bottom:6px;}
+.login-desc{font-size:13px;color:var(--text-sub);margin-bottom:32px;line-height:1.6;}
+.login-form-group{margin-bottom:18px;}
+.login-label{font-size:13px;font-weight:600;color:var(--text);margin-bottom:6px;display:block;}
+.login-input{width:100%;padding:11px 14px;border:1px solid var(--border);border-radius:8px;font-size:14px;color:var(--text);outline:none;transition:border-color .2s;background:#fff;}
+.login-input:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(22,119,255,.08);}
+.login-input.error{border-color:var(--danger);}
+.login-error{font-size:12px;color:var(--danger);margin-top:5px;display:none;}
+.login-role-group{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:24px;}
+.login-role-item{display:flex;align-items:center;gap:8px;padding:10px 14px;border:1px solid var(--border);border-radius:8px;cursor:pointer;transition:all .2s;}
+.login-role-item:hover{border-color:var(--primary);background:var(--primary-light);}
+.login-role-item.selected{border-color:var(--primary);background:var(--primary-light);}
+.login-role-item input{display:none;}
+.login-role-label{font-size:13px;font-weight:500;}
+.login-role-desc{font-size:11px;color:var(--text-sub);}
+.login-btn{width:100%;padding:13px;background:var(--primary);color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;transition:background .2s;margin-top:4px;}
+.login-btn:hover{background:#4096ff;}
+.login-divider{display:flex;align-items:center;gap:12px;margin:20px 0;color:var(--text-dis);font-size:12px;}
+.login-divider::before,.login-divider::after{content:'';flex:1;height:1px;background:var(--border);}
+.login-demo-users{display:flex;gap:8px;flex-wrap:wrap;}
+.demo-user-chip{display:flex;align-items:center;gap:5px;padding:5px 10px;border:1px solid var(--border);border-radius:20px;cursor:pointer;font-size:12px;transition:all .2s;background:#fff;}
+.demo-user-chip:hover{border-color:var(--primary);color:var(--primary);}
+.demo-avatar{width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;flex-shrink:0;}
+</style>
+</head>
+<body>
+
+<!-- ===== 登录页 ===== -->
+<div class="login-overlay" id="loginOverlay">
+  <div class="login-card">
+    <div class="login-logo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      <div>
+        <div class="login-logo-text">工作日志系统</div>
+        <div class="login-logo-sub">Work Log Management System</div>
+      </div>
+    </div>
+    <div class="login-title">欢迎登录</div>
+    <div class="login-desc">请输入您的 RTX 账号登录系统</div>
+    <div class="login-form-group">
+      <label class="login-label">RTX 账号 <span style="color:var(--danger)">*</span></label>
+      <input class="login-input" id="loginRtx" type="text" placeholder="请输入 RTX 账号，如：zhangsan" maxlength="30" oninput="onRtxInput()" onkeydown="if(event.key==='Enter')doLogin()">
+      <div class="login-error" id="loginRtxErr">请输入 RTX 账号</div>
+      <div id="loginRtxInfo" style="display:none;margin-top:8px;padding:8px 12px;border-radius:6px;font-size:13px;"></div>
+    </div>
+    <!-- 姓名输入框：仅 RTX 未注册时显示 -->
+    <div class="login-form-group" id="loginNameGroup" style="display:none;margin-bottom:24px;">
+      <label class="login-label">您的姓名 <span style="color:var(--danger)">*</span></label>
+      <input class="login-input" id="loginName" type="text" placeholder="请输入真实姓名，如：张三" maxlength="20" onkeydown="if(event.key==='Enter')doLogin()">
+      <div class="login-error" id="loginNameErr">请输入姓名</div>
+      <div style="margin-top:5px;font-size:12px;color:var(--text-sub);">&#9432;&nbsp;首次登录，姓名将用于日报/周报展示。管理员未分配团队前，您仅可查看个人数据。</div>
+    </div>
+    <button class="login-btn" onclick="doLogin()" style="margin-top:8px;">登 录</button>
+    <div class="login-divider">或使用预设账号快速体验</div>
+    <div class="login-demo-users" id="demoUsers"></div>
+  </div>
+</div>
+
+<nav class="nav">
+  <div class="nav-logo">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+    工作日志系统
+  </div>
+  <div class="nav-tabs">
+    <div class="nav-tab active" onclick="switchPage('overview')">工作一览</div>
+    <div class="nav-tab" onclick="switchPage('daily')">日报详情</div>
+    <div class="nav-tab" onclick="switchPage('weekly')">周报详情</div>
+    <div class="nav-tab" id="adminNavTab" style="display:none" onclick="switchPage('admin')">团队管理</div>
+  </div>
+  <div class="nav-right">
+    <span class="role-badge-nav" id="roleBadgeNav"></span>
+    <div class="user-info" id="currentUserName"></div>
+    <div class="user-avatar" id="currentUserAvatar" onclick="toggleUserMenu()"></div>
+    <div id="userMenu" style="display:none;position:absolute;top:52px;right:0;background:#fff;border:1px solid var(--border);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.12);padding:8px;min-width:190px;z-index:200;"></div>
+    <button class="btn btn-sm" onclick="logout()" style="font-size:12px;color:var(--text-sub);">退出</button>
+  </div>
+</nav>
+<div class="main">
+  <div class="page active" id="page-overview">
+    <div class="overview-header">
+      <div><div class="week-title" id="weekTitle">第12周工作一览</div><div class="week-sub" id="weekSub">2026-03-24 ~ 2026-03-30</div></div>
+      <div class="week-nav">
+        <button class="btn btn-sm" onclick="changeWeek(-1)">← 上周</button>
+        <button class="btn btn-sm" onclick="changeWeek(0)" style="background:var(--primary-light);color:var(--primary);border-color:var(--primary)">本周</button>
+        <button class="btn btn-sm" onclick="changeWeek(1)">下周 →</button>
+      </div>
+      <div class="type-tabs">
+        <div class="type-tab active" onclick="switchViewType('daily')">日报汇总</div>
+        <div class="type-tab" onclick="switchViewType('weekly')">周报汇总</div>
+      </div>
+    </div>
+    <div class="team-filter-bar"><span class="team-filter-label">团队：</span><div id="teamFilterTabs" style="display:flex;gap:8px;flex-wrap:wrap;"></div></div>
+    <div class="overview-body">
+      <div class="member-list">
+        <div class="member-list-header"><span>成员列表</span><span id="memberListCount" style="font-size:11px;color:var(--text-dis);font-weight:400;"></span></div>
+        <div id="memberListAll"></div>
+        <div id="memberListContainer"></div>
+      </div>
+      <div class="content-area" id="contentArea"></div>
+    </div>
+  </div>
+  <div class="page" id="page-daily">
+    <div class="page-header">
+      <div class="page-title">日报详情</div>
+      <button class="btn btn-primary" onclick="openWriteDaily()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>填写今日日报</button>
+    </div>
+    <div class="filter-bar">
+      <span class="filter-label">筛选：</span>
+      <input type="date" id="dailyFilterDate" onchange="renderDailyList()">
+      <select id="dailyFilterUser" onchange="renderDailyList()"><option value="">全部成员</option></select>
+      <button class="btn btn-sm" onclick="clearDailyFilter()">清除筛选</button>
+      <span class="text-sub ml-auto" id="dailyResultCount"></span>
+    </div>
+    <div id="dailyLogList"></div>
+  </div>
+  <div class="page" id="page-weekly">
+    <div class="page-header">
+      <div class="page-title">周报详情</div>
+      <button class="btn" onclick="showWeeklyHistory()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>历史周报</button>
+    </div>
+    <div class="weekly-status-bar">
+      <span class="status-week" id="myWeekLabel"></span>
+      <span id="weeklyStatusBadge"></span>
+      <div class="ml-auto"><button class="btn btn-primary" id="generateBtn" onclick="generateWeeklyReport()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>AI 生成周报</button></div>
+    </div>
+    <div id="weeklyReportContent"></div>
+  </div>
+  <div class="page" id="page-admin">
+    <div class="page-header"><div class="page-title">团队管理</div></div>
+    <div id="adminContent"></div>
+  </div>
+</div>
+<div class="modal-overlay" id="writeDailyModal"><div class="modal">
+  <div class="modal-header"><div class="modal-title" id="writeDailyTitle">填写今日日报</div><div class="modal-close" onclick="closeModal('writeDailyModal')">x</div></div>
+  <div class="modal-body">
+    <div class="form-group"><label class="form-label">填写日期 <span class="required">*</span></label><input type="date" id="dailyDate" style="width:100%"></div>
+    <div class="form-group"><label class="form-label">工作内容 <span class="required">*</span></label><textarea id="dailyContent" placeholder="请输入今日工作内容" oninput="updateCharCount()"></textarea><div class="char-count" id="charCount">0 / 1000</div></div>
+  </div>
+  <div class="modal-footer"><button class="btn" onclick="closeModal('writeDailyModal')">取消</button><button class="btn btn-primary" onclick="saveDaily()">保存日报</button></div>
+</div></div>
+<div class="modal-overlay" id="editWeeklyModal"><div class="modal">
+  <div class="modal-header"><div class="modal-title">编辑周报</div><div class="modal-close" onclick="closeModal('editWeeklyModal')">x</div></div>
+  <div class="modal-body">
+    <div class="form-group"><label class="form-label">本周工作概述</label><textarea id="editOverview" style="min-height:80px;"></textarea></div>
+    <div class="form-group"><label class="form-label">重点工作事项（每行一条）</label><textarea id="editItems" style="min-height:120px;"></textarea></div>
+    <div class="form-group"><label class="form-label">下周工作计划（可选）</label><textarea id="editNextPlan" style="min-height:80px;"></textarea></div>
+  </div>
+  <div class="modal-footer"><button class="btn" onclick="closeModal('editWeeklyModal')">取消</button><button class="btn btn-primary" onclick="saveWeeklyEdit()">保存修改</button></div>
+</div></div>
+<div class="modal-overlay" id="historyModal"><div class="modal">
+  <div class="modal-header"><div class="modal-title">历史周报</div><div class="modal-close" onclick="closeModal('historyModal')">x</div></div>
+  <div class="modal-body" style="padding:0;"><div id="historyList"></div></div>
+</div></div>
+<div class="modal-overlay" id="teamModal"><div class="modal" style="width:440px;">
+  <div class="modal-header"><div class="modal-title" id="teamModalTitle">新建团队</div><div class="modal-close" onclick="closeModal('teamModal')">x</div></div>
+  <div class="modal-body">
+    <div class="form-group"><label class="form-label">团队名称 <span class="required">*</span></label><input type="text" id="teamNameInput" class="full" placeholder="如：产品组、前端组"></div>
+    <div class="form-group"><label class="form-label">团队管理员 <span class="required">*</span></label><select id="teamAdminSelect" style="width:100%"></select></div>
+  </div>
+  <div class="modal-footer"><button class="btn" onclick="closeModal('teamModal')">取消</button><button class="btn btn-primary" onclick="saveTeam()">保存</button></div>
+</div></div>
+<div class="modal-overlay" id="memberModal"><div class="modal" style="width:480px;">
+  <div class="modal-header"><div class="modal-title" id="memberModalTitle">添加成员</div><div class="modal-close" onclick="closeModal('memberModal')">x</div></div>
+  <div class="modal-body">
+    <div class="form-group"><label class="form-label">姓名 <span class="required">*</span></label><input type="text" id="newMemberName" class="full" placeholder="如：赵六"></div>
+    <div class="form-group"><label class="form-label">账号 RTX <span class="required">*</span></label><input type="text" id="newMemberRtx" class="full" placeholder="如：zhaoliu"></div>
+    <div class="form-group"><label class="form-label">角色</label><select id="newMemberRole" style="width:100%" onchange="onRoleChange()"><option value="member">普通成员</option><option value="team_admin">团队管理员</option><option value="sys_admin">系统管理员</option></select></div>
+    <div class="form-group" id="newMemberTeamGroup"><label class="form-label">所属团队</label><select id="newMemberTeam" style="width:100%"></select></div>
+  </div>
+  <div class="modal-footer"><button class="btn" onclick="closeModal('memberModal')">取消</button><button class="btn btn-primary" onclick="saveMember()">保存</button></div>
+</div></div>
+<div class="toast-container" id="toastContainer"></div>
+<script>
+let USERS=[
+  {rtx:'terrencelli',name:'Terrence',color:'#1677ff',role:'sys_admin',teamId:null},
+  {rtx:'nianzhao',name:'赵念',color:'#ff4d4f',role:'sys_admin',teamId:null},
+  {rtx:'zhangsan',name:'张三',color:'#52c41a',role:'team_admin',teamId:'t1'},
+  {rtx:'lisi',name:'李四',color:'#13c2c2',role:'member',teamId:'t1'},
+  {rtx:'wangwu',name:'王五',color:'#faad14',role:'member',teamId:'t1'},
+  {rtx:'zhaoliu',name:'赵六',color:'#722ed1',role:'team_admin',teamId:'t2'},
+  {rtx:'sunqi',name:'孙七',color:'#eb2f96',role:'member',teamId:'t2'},
+];
+let TEAMS=[
+  {id:'t1',name:'产品与前端组',adminRtx:'zhangsan'},
+  {id:'t2',name:'测试与质量组',adminRtx:'zhaoliu'},
+];
+let currentUser=USERS[0],currentWeekOffset=0,selectedMember=null,currentViewType='daily';
+let editingDailyId=null,currentWeeklyReport=null,currentTeamFilter='all';
+let editingTeamId=null,editingMemberRtx=null;
+let dailyLogs=[
+  {id:'d1',user_rtx:'zhangsan',user_name:'张三',log_date:'2026-03-24',content:'1. 参加产品需求评审，确认功能可行性\n2. 完成产品原型 V2 版本\n3. 与开发团队对齐排期',created_at:'2026-03-24 18:00',updated_at:'2026-03-24 18:00'},
+  {id:'d2',user_rtx:'zhangsan',user_name:'张三',log_date:'2026-03-25',content:'1. 修改原型，补充边界场景设计\n2. 编写需求文档 V1.0\n3. 与 UI 设计师沟通视觉风格',created_at:'2026-03-25 17:50',updated_at:'2026-03-25 17:50'},
+  {id:'d3',user_rtx:'zhangsan',user_name:'张三',log_date:'2026-03-26',content:'1. 优化原型，完成交互细节\n2. 组织技术方案评审\n3. 完成竞品分析报告',created_at:'2026-03-26 18:30',updated_at:'2026-03-26 18:30'},
+  {id:'d4',user_rtx:'zhangsan',user_name:'张三',log_date:'2026-03-27',content:'1. 完成用户需求评审，与业务方对齐\n2. 更新需求文档至 V1.1\n3. 参加团队周会，汇报进展',created_at:'2026-03-27 17:45',updated_at:'2026-03-27 18:20'},
+  {id:'d5',user_rtx:'lisi',user_name:'李四',log_date:'2026-03-24',content:'1. 完成登录模块前端开发\n2. 修复测试反馈 3 个 Bug\n3. 代码 Review',created_at:'2026-03-24 18:10',updated_at:'2026-03-24 18:10'},
+  {id:'d6',user_rtx:'lisi',user_name:'李四',log_date:'2026-03-25',content:'1. 完成首页列表组件开发\n2. 与产品对齐交互逻辑\n3. 完成设计稿 Review',created_at:'2026-03-25 18:00',updated_at:'2026-03-25 18:00'},
+  {id:'d7',user_rtx:'lisi',user_name:'李四',log_date:'2026-03-26',content:'1. 完成详情页前端开发\n2. 接入后端接口联调通过\n3. 撰写单元测试，覆盖率 80%',created_at:'2026-03-26 17:40',updated_at:'2026-03-26 17:40'},
+  {id:'d8',user_rtx:'lisi',user_name:'李四',log_date:'2026-03-27',content:'1. 完成设计稿第二版\n2. 前端性能优化，首屏加载减少 40%\n3. 参加技术方案评审',created_at:'2026-03-27 18:00',updated_at:'2026-03-27 18:00'},
+  {id:'d9',user_rtx:'wangwu',user_name:'王五',log_date:'2026-03-25',content:'1. 参加项目启动会\n2. 梳理测试用例，输出测试计划\n3. 搭建测试环境',created_at:'2026-03-25 17:30',updated_at:'2026-03-25 17:30'},
+  {id:'d10',user_rtx:'wangwu',user_name:'王五',log_date:'2026-03-26',content:'1. 执行登录模块功能测试\n2. 发现并提交 5 个缺陷\n3. 编写测试报告',created_at:'2026-03-26 18:00',updated_at:'2026-03-26 18:00'},
+  {id:'d11',user_rtx:'wangwu',user_name:'王五',log_date:'2026-03-27',content:'1. 回归测试，验证 Bug 修复\n2. 执行接口自动化测试\n3. 更新测试用例库',created_at:'2026-03-27 17:50',updated_at:'2026-03-27 17:50'},
+  {id:'d12',user_rtx:'zhaoliu',user_name:'赵六',log_date:'2026-03-25',content:'1. 制定团队质量规范\n2. 推进自动化测试框架搭建\n3. 与产品对齐验收标准',created_at:'2026-03-25 18:00',updated_at:'2026-03-25 18:00'},
+  {id:'d13',user_rtx:'zhaoliu',user_name:'赵六',log_date:'2026-03-26',content:'1. 完成质量规范文档 V1.0\n2. 评审孙七的测试用例\n3. 参加全员技术分享',created_at:'2026-03-26 17:30',updated_at:'2026-03-26 17:30'},
+  {id:'d14',user_rtx:'sunqi',user_name:'孙七',log_date:'2026-03-26',content:'1. 完成接口测试脚本编写\n2. 执行冒烟测试\n3. 输出测试报告',created_at:'2026-03-26 18:10',updated_at:'2026-03-26 18:10'},
+  {id:'d15',user_rtx:'sunqi',user_name:'孙七',log_date:'2026-03-27',content:'1. 执行全量回归测试\n2. 输出缺陷跟踪报告\n3. 完成性能测试初步分析',created_at:'2026-03-27 18:00',updated_at:'2026-03-27 18:00'},
+];
+let weeklyReports=[
+  {id:'w1',user_rtx:'lisi',user_name:'李四',week_start:'2026-03-24',week_end:'2026-03-30',overview:'本周完成了登录模块、首页列表及详情页的前端开发，联调通过并完成性能优化。',items:['完成登录模块、列表页、详情页前端开发','前端性能优化，首屏加载时间减少 40%','完成设计稿 Review 及第二版输出','代码 Review，保障代码质量'],nextPlan:'下周完成搜索功能开发，推进整体功能联调',status:'submitted',is_ai_generated:true,submitted_at:'2026-03-27 19:30',created_at:'2026-03-27 19:00',updated_at:'2026-03-27 19:30'},
+  {id:'w2',user_rtx:'zhaoliu',user_name:'赵六',week_start:'2026-03-24',week_end:'2026-03-30',overview:'本周完成质量规范文档制定，推进自动化测试框架搭建，组织团队质量标准对齐。',items:['制定团队质量规范文档 V1.0','推进自动化测试框架搭建','评审测试用例并组织对齐会','参加全员技术分享'],nextPlan:'下周完成自动化框架第一阶段交付，覆盖核心接口',status:'submitted',is_ai_generated:false,submitted_at:'2026-03-27 20:00',created_at:'2026-03-27 19:50',updated_at:'2026-03-27 20:00'},
+];
+const ROLE_LABELS={member:'普通成员',team_admin:'团队管理员',sys_admin:'系统管理员'};
+const ROLE_BADGE={member:'badge-default',team_admin:'badge-orange',sys_admin:'badge-purple'};
+const COLORS=['#1677ff','#52c41a','#faad14','#722ed1','#13c2c2','#eb2f96','#fa8c16','#a0d911'];
+function gwr(o=0){const n=new Date('2026-03-27'),day=n.getDay()||7,m=new Date(n);m.setDate(n.getDate()-day+1+o*7);const s=new Date(m);s.setDate(m.getDate()+6);const f=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;return{start:f(m),end:f(s),weekNum:wkn(m)};}
+function wkn(d){const dt=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())),dn=dt.getUTCDay()||7;dt.setUTCDate(dt.getUTCDate()+4-dn);const ys=new Date(Date.UTC(dt.getUTCFullYear(),0,1));return Math.ceil((((dt-ys)/86400000)+1)/7);}
+function dir(d,s,e){return d>=s&&d<=e;}
+function wkd(ds){return'星期'+['日','一','二','三','四','五','六'][new Date(ds).getDay()];}
+function fmtd(ds){const d=new Date(ds);return`${d.getMonth()+1}月${d.getDate()}日`;}
+function gid(){return Math.random().toString(36).slice(2,10);}
+function getUser(rtx){return USERS.find(u=>u.rtx===rtx);}
+function getTeam(id){return TEAMS.find(t=>t.id===id);}
+function uc(rtx){return getUser(rtx)?.color||'#8c8c8c';}
+function nt(){return'2026-03-27 '+new Date().toTimeString().slice(0,5);}
+function visMembers(){
+  const b=USERS.filter(u=>u.role!=='sys_admin');
+  // 未分配团队的普通成员：只能看到自己
+  if(currentUser.role==='member'&&!currentUser.teamId) return b.filter(u=>u.rtx===currentUser.rtx);
+  if(currentTeamFilter==='all') return b;
+  return b.filter(u=>u.teamId===currentTeamFilter);
+}
+function toast(msg,type='success'){const ic={success:'✓',error:'✗',info:'ℹ'},cl={success:'success',error:'danger',info:'primary'};const el=document.createElement('div');el.className=`toast ${type}`;el.innerHTML=`<span style="font-size:16px;color:var(--${cl[type]})">${ic[type]}</span><span>${msg}</span>`;document.getElementById('toastContainer').appendChild(el);setTimeout(()=>{el.style.opacity='0';el.style.transform='translateX(100%)';el.style.transition='all .3s';setTimeout(()=>el.remove(),300);},2500);}
+function buildUserMenu(){const hd=`<div style="padding:6px 12px;font-size:12px;color:var(--text-sub);border-bottom:1px solid var(--border);margin-bottom:6px;">切换账号</div>`;document.getElementById('userMenu').innerHTML=hd+USERS.map(u=>`<div class="member-item" style="border:none;padding:8px 12px;border-radius:6px;" onclick="switchUser('${u.rtx}')"><div class="member-avatar" style="background:${u.color};width:26px;height:26px;font-size:11px;">${u.name[0]}</div><div style="flex:1;"><div style="font-size:13px;">${u.name}</div><div style="font-size:11px;color:var(--text-sub);">${ROLE_LABELS[u.role]}</div></div></div>`).join('');}
+function toggleUserMenu(){const m=document.getElementById('userMenu');m.style.display=m.style.display==='none'?'block':'none';document.addEventListener('click',function h(e){if(!e.target.closest('#userMenu')&&!e.target.closest('.user-avatar')){m.style.display='none';document.removeEventListener('click',h);}});}
+function switchUser(rtx){currentUser=getUser(rtx);document.getElementById('currentUserName').textContent=currentUser.name;document.getElementById('currentUserAvatar').textContent=currentUser.name[0];document.getElementById('currentUserAvatar').style.background=currentUser.color;document.getElementById('userMenu').style.display='none';updateRoleBadge();updateAdminNav();toast(`已切换到 ${currentUser.name}（${ROLE_LABELS[currentUser.role]}）`,'info');renderOverview();renderDailyList();renderWeeklyPage();buildDailyFilter();}
+function updateRoleBadge(){const el=document.getElementById('roleBadgeNav');if(currentUser.role==='member'){el.textContent='';el.className='role-badge-nav';return;}const cfg={team_admin:['团队管理员','badge-orange'],sys_admin:['系统管理员','badge-purple']};const[lb,cl]=cfg[currentUser.role];el.textContent=lb;el.className=`role-badge-nav ${cl}`;}
+function updateAdminNav(){document.getElementById('adminNavTab').style.display=(currentUser.role!=='member')?'':'none';}
+function switchPage(name){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.getElementById('page-'+name).classList.add('active');document.querySelectorAll('.nav-tab').forEach(t=>{const m={'工作一览':'overview','日报详情':'daily','周报详情':'weekly','团队管理':'admin'};t.classList.toggle('active',m[t.textContent.trim()]===name);});if(name==='overview')renderOverview();if(name==='daily'){renderDailyList();buildDailyFilter();}if(name==='weekly')renderWeeklyPage();if(name==='admin')renderAdminPage();}
+function changeWeek(o){currentWeekOffset=o===0?0:currentWeekOffset+o;renderOverview();}
+function switchViewType(type){currentViewType=type;document.querySelectorAll('.type-tab').forEach((t,i)=>t.classList.toggle('active',['daily','weekly'][i]===type));renderContentArea();}
+function renderOverview(){const r=gwr(currentWeekOffset);document.getElementById('weekTitle').textContent=`第${r.weekNum}周工作一览`;document.getElementById('weekSub').textContent=`${r.start} ~ ${r.end}`;renderTeamTabs();renderMemberList(r);renderContentArea(r);}
+function renderTeamTabs(){let h=`<div class="team-tab ${currentTeamFilter==='all'?'active':''}" onclick="setTeamFilter('all')">全部</div>`;TEAMS.forEach(t=>{h+=`<div class="team-tab ${currentTeamFilter===t.id?'active':''}" onclick="setTeamFilter('${t.id}')">${t.name}</div>`;});document.getElementById('teamFilterTabs').innerHTML=h;}
+function setTeamFilter(tid){currentTeamFilter=tid;selectedMember=null;renderOverview();}
+function renderMemberList(range){if(!range)range=gwr(currentWeekOffset);const vis=visMembers();document.getElementById('memberListCount').textContent=`${vis.length} 人`;const allA=selectedMember===null;document.getElementById('memberListAll').innerHTML=`<div class="member-item ${allA?'active':''}" onclick="filterByMember(null)"><div class="member-avatar" style="background:#8c8c8c">全</div><div style="flex:1;min-width:0;"><div class="member-name">全部成员</div><div class="progress-wrap"><div class="progress-bar"><div class="progress-fill" style="width:100%;background:#d9d9d9;"></div></div><span class="progress-text">${vis.length}人</span></div></div></div>`;document.getElementById('memberListContainer').innerHTML=vis.map(m=>{const logs=dailyLogs.filter(l=>l.user_rtx===m.rtx&&dir(l.log_date,range.start,range.end));const rep=weeklyReports.find(r=>r.user_rtx===m.rtx&&r.week_start===range.start);const sub=rep?.status==='submitted';const act=selectedMember===m.rtx;const pct=Math.round((logs.length/7)*100);const fc=logs.length<=3?'var(--danger)':logs.length<=5?'var(--warning)':'var(--success)';const rp=m.role!=='member'?`<span class="badge ${ROLE_BADGE[m.role]}" style="padding:1px 5px;font-size:10px;">${m.role==='team_admin'?'管理员':'系统'}</span>`:'';return`<div class="member-item ${act?'active':''}" onclick="filterByMember('${m.rtx}')"><div class="member-avatar" style="background:${m.color}">${m.name[0]}</div><div style="flex:1;min-width:0;"><div style="display:flex;align-items:center;gap:4px;"><span class="member-name">${m.name}</span>${rp}</div><div class="progress-wrap"><div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${fc};"></div></div><span class="progress-text">${logs.length}/7</span></div></div><div class="member-check">${sub?'<span style="color:var(--success);font-size:13px;">&#10003;</span>':'<span style="color:var(--text-dis);font-size:13px;">&#10007;</span>'}</div></div>`;}).join('');}
+function filterByMember(rtx){selectedMember=rtx;renderOverview();}
+function renderContentArea(range){if(!range)range=gwr(currentWeekOffset);const area=document.getElementById('contentArea');currentViewType==='daily'?renderTimeline(area,range):renderWeeklySummary(area,range);}
+function renderTimeline(area,range){const dates=[];let d=new Date(range.start);const today=new Date('2026-03-27');while(d<=new Date(range.end)&&d<=today){dates.push(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`);d.setDate(d.getDate()+1);}dates.reverse();const vr=visMembers().map(m=>m.rtx);let html='';dates.forEach(date=>{let logs=dailyLogs.filter(l=>l.log_date===date&&vr.includes(l.user_rtx));if(selectedMember)logs=logs.filter(l=>l.user_rtx===selectedMember);if(!logs.length&&selectedMember)return;html+=`<div class="timeline-day"><div class="timeline-date"><div class="timeline-date-dot"></div><span class="timeline-date-text">${fmtd(date)}</span><span class="timeline-date-week">${wkd(date)}</span></div><div class="timeline-entries">`;if(!logs.length){html+=`<div style="padding:10px 16px;color:var(--text-dis);font-size:13px;">当日暂无日报记录</div>`;}else logs.forEach(log=>{html+=`<div class="timeline-entry"><div class="entry-header"><div class="member-avatar" style="background:${uc(log.user_rtx)};width:24px;height:24px;font-size:11px;">${log.user_name[0]}</div><span class="entry-name">${log.user_name}</span><span style="font-size:11px;color:var(--text-dis);margin-left:auto;">${log.updated_at}</span></div><div class="entry-content">${log.content.split('\n').map(l=>`<p>${l}</p>`).join('')}</div></div>`;});html+=`</div></div>`;});area.innerHTML=html||`<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg><p>本周暂无日报记录</p></div>`;}
+function renderWeeklySummary(area,range){const vr=visMembers().map(m=>m.rtx);let reps=weeklyReports.filter(r=>r.week_start===range.start&&r.status==='submitted'&&vr.includes(r.user_rtx));if(selectedMember)reps=reps.filter(r=>r.user_rtx===selectedMember);let html='';const sr=reps.map(r=>r.user_rtx);reps.sort((a,b)=>b.submitted_at.localeCompare(a.submitted_at)).forEach(r=>{html+=`<div class="weekly-card"><div class="weekly-card-header"><div class="member-avatar" style="background:${uc(r.user_rtx)}">${r.user_name[0]}</div><span class="weekly-card-name">${r.user_name}（${r.user_rtx}）</span><span class="badge badge-success">&#10003; 已提交</span><span class="weekly-card-time">提交：${r.submitted_at}</span></div><div class="weekly-card-body"><div class="weekly-card-section-title">本周工作概述：</div><div class="weekly-card-overview">${r.overview}</div><div class="weekly-card-section-title">重点工作事项：</div><ul>${r.items.map((item,i)=>`<li>${i+1}. ${item}</li>`).join('')}</ul>${r.nextPlan?`<div style="margin-top:12px;"><div class="weekly-card-section-title">下周工作计划：</div><div style="font-size:13px;color:var(--text-sub);line-height:1.8;">${r.nextPlan}</div></div>`:''}</div></div>`;});if(!selectedMember){visMembers().filter(m=>!sr.includes(m.rtx)).forEach(m=>{html+=`<div style="display:flex;align-items:center;gap:10px;padding:14px 20px;background:#fff;border:1px solid var(--border);border-radius:10px;margin-bottom:12px;"><div class="member-avatar" style="background:${m.color};opacity:.5">${m.name[0]}</div><span style="font-size:13px;color:var(--text-dis);">${m.name}（${m.rtx}）</span><span class="badge badge-default">暂无周报</span></div>`;});}area.innerHTML=html||`<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><p>本周暂无已提交的周报</p></div>`;}
+function buildDailyFilter(){const sel=document.getElementById('dailyFilterUser');sel.innerHTML=`<option value="">全部成员</option>`+USERS.filter(u=>u.role!=='sys_admin').map(u=>`<option value="${u.rtx}">${u.name}</option>`).join('');}
+function renderDailyList(){const df=document.getElementById('dailyFilterDate').value,uf=document.getElementById('dailyFilterUser').value;let logs=[...dailyLogs];logs=uf?logs.filter(l=>l.user_rtx===uf):logs.filter(l=>l.user_rtx===currentUser.rtx);if(df)logs=logs.filter(l=>l.log_date===df);logs.sort((a,b)=>b.log_date.localeCompare(a.log_date));document.getElementById('dailyResultCount').textContent=`共 ${logs.length} 条记录`;if(!logs.length){document.getElementById('dailyLogList').innerHTML=`<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg><p>暂无日报记录</p></div>`;return;}document.getElementById('dailyLogList').innerHTML=logs.map(log=>{const ce=log.user_rtx===currentUser.rtx;return`<div class="log-card"><div class="log-card-header"><div class="member-avatar" style="background:${uc(log.user_rtx)};width:28px;height:28px;font-size:12px;">${log.user_name[0]}</div><span class="log-date">${log.log_date}</span><span class="log-weekday">${wkd(log.log_date)}</span><span class="log-author">${log.user_name}（${log.user_rtx}）</span></div><div class="log-card-body"><div class="log-content">${log.content}</div></div><div class="log-card-footer">${ce?`<button class="btn btn-sm" onclick="editDaily('${log.id}')">编辑</button><button class="btn btn-sm btn-danger" onclick="deleteDaily('${log.id}')">删除</button>`:'<span class="badge badge-default">只读</span>'}<span class="log-update-time">最后编辑：${log.updated_at}</span></div></div>`;}).join('');}
+function clearDailyFilter(){document.getElementById('dailyFilterDate').value='';document.getElementById('dailyFilterUser').value='';renderDailyList();}
+function openWriteDaily(){editingDailyId=null;document.getElementById('writeDailyTitle').textContent='填写今日日报';document.getElementById('dailyDate').value='2026-03-27';document.getElementById('dailyContent').value='';updateCharCount();openModal('writeDailyModal');}
+function editDaily(id){const log=dailyLogs.find(l=>l.id===id);if(!log||log.user_rtx!==currentUser.rtx){toast('只能编辑自己的日报','error');return;}editingDailyId=id;document.getElementById('writeDailyTitle').textContent='编辑日报';document.getElementById('dailyDate').value=log.log_date;document.getElementById('dailyContent').value=log.content;updateCharCount();openModal('writeDailyModal');}
+function deleteDaily(id){const log=dailyLogs.find(l=>l.id===id);if(!log||log.user_rtx!==currentUser.rtx){toast('只能删除自己的日报','error');return;}if(!confirm('确认删除该日报？'))return;dailyLogs=dailyLogs.filter(l=>l.id!==id);toast('日报已删除');renderDailyList();}
+function saveDaily(){const date=document.getElementById('dailyDate').value,content=document.getElementById('dailyContent').value.trim();if(!date){toast('请选择日期','error');return;}if(!content){toast('请填写工作内容','error');return;}const now=nt();if(editingDailyId){const idx=dailyLogs.findIndex(l=>l.id===editingDailyId);if(idx!==-1){dailyLogs[idx].content=content;dailyLogs[idx].log_date=date;dailyLogs[idx].updated_at=now;toast('日报已更新');}}else{if(dailyLogs.find(l=>l.user_rtx===currentUser.rtx&&l.log_date===date)){toast('该日期已有日报','error');return;}dailyLogs.push({id:'d'+gid(),user_rtx:currentUser.rtx,user_name:currentUser.name,log_date:date,content,created_at:now,updated_at:now});toast('日报保存成功');}closeModal('writeDailyModal');renderDailyList();}
+function updateCharCount(){document.getElementById('charCount').textContent=`${document.getElementById('dailyContent').value.length} / 1000`;}
+function renderWeeklyPage(){const r=gwr(0);document.getElementById('myWeekLabel').textContent=`第${r.weekNum}周（${r.start} ~ ${r.end}）`;const rep=weeklyReports.find(r2=>r2.user_rtx===currentUser.rtx&&r2.week_start===r.start);currentWeeklyReport=rep||null;const badge=document.getElementById('weeklyStatusBadge');badge.innerHTML=!rep?'<span class="badge badge-default">未生成</span>':rep.status==='submitted'?'<span class="badge badge-success">&#10003; 已提交</span>':'<span class="badge badge-warning">草稿</span>';const area=document.getElementById('weeklyReportContent');if(!rep){area.innerHTML=`<div class="weekly-report-card"><div class="empty-state" style="padding:60px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><p>本周暂未生成周报</p><p style="font-size:12px;">点击上方按钮，AI 将基于本周日报自动生成</p></div></div>`;}else renderWeeklyCard(rep,area);}
+function renderWeeklyCard(rep,area){const is=rep.status==='submitted';area.innerHTML=`<div class="weekly-report-card"><div class="weekly-report-header"><div class="member-avatar" style="background:${currentUser.color}">${currentUser.name[0]}</div><span style="font-weight:600;font-size:15px;">${currentUser.name}（${currentUser.rtx}）</span>${rep.is_ai_generated?'<span class="badge badge-primary">AI 生成</span>':''}<span class="ml-auto text-sm" style="color:var(--text-sub);">生成：${rep.created_at}</span></div><div class="weekly-report-body"><div class="report-section"><div class="report-section-title">本周工作概述</div><div class="report-overview-text">${rep.overview}</div></div><div class="report-section"><div class="report-section-title">重点工作事项</div><ul class="report-item-list">${rep.items.map((item,i)=>`<li><span class="report-item-num">${i+1}</span><span>${item}</span></li>`).join('')}</ul></div>${rep.nextPlan?`<div class="report-section"><div class="report-section-title">下周工作计划</div><div class="report-overview-text">${rep.nextPlan}</div></div>`:''}</div><div class="report-footer"><button class="btn" onclick="generateWeeklyReport()">重新生成</button><button class="btn" onclick="openEditWeekly()">编辑</button>${!is?`<button class="btn btn-success" onclick="submitWeekly()">提交周报</button>`:`<button class="btn btn-danger" onclick="revokeWeekly()">撤回</button>`}</div></div>`;}
+function generateWeeklyReport(){const r=gwr(0),ml=dailyLogs.filter(l=>l.user_rtx===currentUser.rtx&&dir(l.log_date,r.start,r.end));if(!ml.length){toast('本周暂无日报，无法生成周报','error');return;}document.getElementById('weeklyReportContent').innerHTML=`<div class="weekly-report-card"><div class="generating-animation"><div class="spinner"></div><span>AI 正在分析本周日报，生成周报中...</span></div></div>`;document.getElementById('generateBtn').disabled=true;setTimeout(()=>{document.getElementById('generateBtn').disabled=false;const om={zhangsan:'本周完成需求评审与产品原型设计，组织技术方案评审并与各方对齐，输出完整需求文档。',lisi:'本周完成登录模块、列表页、详情页前端开发，通过联调并进行性能优化，效果显著。',wangwu:'本周完成测试环境搭建及功能测试，发现并跟进多个缺陷修复，输出详细测试报告。',zhaoliu:'本周完成质量规范文档制定，推进自动化框架搭建，组织质量标准对齐会。',sunqi:'本周完成接口测试脚本编写及全量回归测试，输出缺陷跟踪和性能测试报告。'};const items=[];ml.forEach(log=>{const l=log.content.split('\n').filter(Boolean);if(l[0]){const c=l[0].replace(/^\d+\.\s*/,'').trim();if(c&&!items.includes(c))items.push(c);}});const now=nt();weeklyReports=weeklyReports.filter(rep=>!(rep.user_rtx===currentUser.rtx&&rep.week_start===r.start));const nr={id:'w'+gid(),user_rtx:currentUser.rtx,user_name:currentUser.name,week_start:r.start,week_end:r.end,overview:om[currentUser.rtx]||`本周完成了${ml.length}天工作记录。`,items:items.slice(0,5),nextPlan:'持续推进项目开发，完成下周排期内的功能交付',status:'draft',is_ai_generated:true,submitted_at:null,created_at:now,updated_at:now};weeklyReports.push(nr);currentWeeklyReport=nr;document.getElementById('weeklyStatusBadge').innerHTML='<span class="badge badge-warning">草稿</span>';renderWeeklyCard(nr,document.getElementById('weeklyReportContent'));toast('AI 周报生成成功，请确认后提交');},2200);}
+function submitWeekly(){if(!currentWeeklyReport)return;const idx=weeklyReports.findIndex(r=>r.id===currentWeeklyReport.id);if(idx!==-1){weeklyReports[idx].status='submitted';weeklyReports[idx].submitted_at=nt();weeklyReports[idx].updated_at=weeklyReports[idx].submitted_at;currentWeeklyReport=weeklyReports[idx];document.getElementById('weeklyStatusBadge').innerHTML='<span class="badge badge-success">&#10003; 已提交</span>';renderWeeklyCard(currentWeeklyReport,document.getElementById('weeklyReportContent'));toast('周报已提交，团队成员可在"工作一览"中查看');}}
+function revokeWeekly(){if(!currentWeeklyReport||!confirm('确认撤回周报？'))return;const idx=weeklyReports.findIndex(r=>r.id===currentWeeklyReport.id);if(idx!==-1){weeklyReports[idx].status='draft';weeklyReports[idx].submitted_at=null;currentWeeklyReport=weeklyReports[idx];document.getElementById('weeklyStatusBadge').innerHTML='<span class="badge badge-warning">草稿</span>';renderWeeklyCard(currentWeeklyReport,document.getElementById('weeklyReportContent'));toast('周报已撤回为草稿状态','info');}}
+function openEditWeekly(){if(!currentWeeklyReport)return;document.getElementById('editOverview').value=currentWeeklyReport.overview;document.getElementById('editItems').value=currentWeeklyReport.items.join('\n');document.getElementById('editNextPlan').value=currentWeeklyReport.nextPlan||'';openModal('editWeeklyModal');}
+function saveWeeklyEdit(){if(!currentWeeklyReport)return;const ov=document.getElementById('editOverview').value.trim(),ir=document.getElementById('editItems').value.trim(),np=document.getElementById('editNextPlan').value.trim();if(!ov){toast('请填写工作概述','error');return;}if(!ir){toast('请填写重点工作事项','error');return;}const now=nt(),idx=weeklyReports.findIndex(r=>r.id===currentWeeklyReport.id);if(idx!==-1){weeklyReports[idx].overview=ov;weeklyReports[idx].items=ir.split('\n').map(l=>l.trim()).filter(Boolean);weeklyReports[idx].nextPlan=np;weeklyReports[idx].is_ai_generated=false;weeklyReports[idx].updated_at=now;if(weeklyReports[idx].status==='submitted'){weeklyReports[idx].status='draft';toast('周报已更新，修改后需重新提交','info');}else toast('周报已保存');currentWeeklyReport=weeklyReports[idx];document.getElementById('weeklyStatusBadge').innerHTML=currentWeeklyReport.status==='submitted'?'<span class="badge badge-success">&#10003; 已提交</span>':'<span class="badge badge-warning">草稿</span>';renderWeeklyCard(currentWeeklyReport,document.getElementById('weeklyReportContent'));}closeModal('editWeeklyModal');}
+function showWeeklyHistory(){const rs=weeklyReports.filter(r=>r.user_rtx===currentUser.rtx).sort((a,b)=>b.week_start.localeCompare(a.week_start));if(!rs.length){toast('暂无历史周报','info');return;}document.getElementById('historyList').innerHTML=rs.map(r=>`<div class="history-week-item" onclick="closeModal('historyModal')"><div><div class="history-week-label">第${wkn(new Date(r.week_start))}周（${r.week_start} ~ ${r.week_end}）</div><div class="history-week-sub">${r.updated_at}</div></div><span class="badge ${r.status==='submitted'?'badge-success':'badge-warning'}">${r.status==='submitted'?'已提交':'草稿'}</span></div>`).join('');openModal('historyModal');}
+function renderAdminPage(){const isSys=currentUser.role==='sys_admin',isTA=currentUser.role==='team_admin';let html='';if(isSys){html+=`<div class="admin-section"><div class="admin-section-header"><div class="admin-section-title">团队列表</div><button class="btn btn-primary btn-sm" onclick="openTeamModal()">+ 新建团队</button></div><table class="admin-table"><thead><tr><th>团队名称</th><th>管理员</th><th>成员数</th><th>操作</th></tr></thead><tbody>${TEAMS.map(t=>{const ad=getUser(t.adminRtx),cnt=USERS.filter(u=>u.teamId===t.id).length;return`<tr><td><strong>${t.name}</strong></td><td><div style="display:flex;align-items:center;gap:6px;"><div class="member-avatar" style="background:${ad?.color||'#8c8c8c'};width:22px;height:22px;font-size:10px;">${ad?.name[0]||'?'}</div>${ad?.name||'未设置'}</div></td><td>${cnt} 人</td><td><button class="btn btn-sm" onclick="openTeamModal('${t.id}')">编辑</button> <button class="btn btn-sm btn-danger" onclick="deleteTeam('${t.id}')">删除</button></td></tr>`;}).join('')}</tbody></table></div>`;html+=`<div class="admin-section"><div class="admin-section-header"><div class="admin-section-title">全部成员</div><button class="btn btn-primary btn-sm" onclick="openMemberModal()">+ 添加成员</button></div><table class="admin-table"><thead><tr><th>姓名</th><th>账号 RTX</th><th>角色</th><th>所属团队</th><th>操作</th></tr></thead><tbody>${USERS.map(u=>{const tm=u.teamId?getTeam(u.teamId):null;return`<tr><td><div style="display:flex;align-items:center;gap:8px;"><div class="member-avatar" style="background:${u.color};width:26px;height:26px;font-size:11px;">${u.name[0]}</div>${u.name}</div></td><td style="color:var(--text-sub);">${u.rtx}</td><td><span class="badge ${ROLE_BADGE[u.role]}">${ROLE_LABELS[u.role]}</span></td><td>${tm?tm.name:'<span style="color:var(--text-dis);">—</span>'}</td><td><button class="btn btn-sm" onclick="openMemberModal('${u.rtx}')">编辑</button> <button class="btn btn-sm btn-danger" onclick="deleteMember('${u.rtx}')">移除</button></td></tr>`;}).join('')}</tbody></table></div>`;}else if(isTA){const mt=TEAMS.find(t=>t.adminRtx===currentUser.rtx),mbs=mt?USERS.filter(u=>u.teamId===mt.id):[];html+=`<div class="admin-section"><div class="admin-section-header"><div class="admin-section-title">我的团队：${mt?mt.name:'未分配'}</div>${mt?`<button class="btn btn-primary btn-sm" onclick="openMemberModal()">+ 添加成员</button>`:''}</div>${mt?`<table class="admin-table"><thead><tr><th>姓名</th><th>账号 RTX</th><th>角色</th><th>操作</th></tr></thead><tbody>${mbs.map(u=>`<tr><td><div style="display:flex;align-items:center;gap:8px;"><div class="member-avatar" style="background:${u.color};width:26px;height:26px;font-size:11px;">${u.name[0]}</div>${u.name}</div></td><td style="color:var(--text-sub);">${u.rtx}</td><td><span class="badge ${ROLE_BADGE[u.role]}">${ROLE_LABELS[u.role]}</span></td><td><button class="btn btn-sm btn-danger" onclick="removeFromTeam('${u.rtx}')">移出团队</button></td></tr>`).join('')}</tbody></table>`:`<div style="padding:30px;text-align:center;color:var(--text-sub);">您尚未被分配管理任何团队</div>`}</div>`;}document.getElementById('adminContent').innerHTML=html;}
+function openTeamModal(teamId){editingTeamId=teamId||null;document.getElementById('teamModalTitle').textContent=teamId?'编辑团队':'新建团队';const opts=USERS.filter(u=>u.role!=='member').map(u=>`<option value="${u.rtx}">${u.name}（${u.rtx}）</option>`).join('');document.getElementById('teamAdminSelect').innerHTML=opts;if(teamId){const t=getTeam(teamId);document.getElementById('teamNameInput').value=t.name;document.getElementById('teamAdminSelect').value=t.adminRtx;}else document.getElementById('teamNameInput').value='';openModal('teamModal');}
+function saveTeam(){const name=document.getElementById('teamNameInput').value.trim(),adm=document.getElementById('teamAdminSelect').value;if(!name){toast('请输入团队名称','error');return;}if(editingTeamId){const t=getTeam(editingTeamId);t.name=name;t.adminRtx=adm;toast('团队信息已更新');}else{TEAMS.push({id:'t'+gid(),name,adminRtx:adm});toast('团队创建成功');}closeModal('teamModal');renderAdminPage();renderTeamTabs();}
+function deleteTeam(id){if(!confirm('确认删除该团队？团队内成员将变为无团队状态。'))return;USERS.forEach(u=>{if(u.teamId===id)u.teamId=null;});TEAMS=TEAMS.filter(t=>t.id!==id);toast('团队已删除');renderAdminPage();renderTeamTabs();if(currentTeamFilter===id){currentTeamFilter='all';renderOverview();}}
+function openMemberModal(rtx){editingMemberRtx=rtx||null;document.getElementById('memberModalTitle').textContent=rtx?'编辑成员':'添加成员';const tOpts=`<option value="">无</option>`+TEAMS.map(t=>`<option value="${t.id}">${t.name}</option>`).join('');document.getElementById('newMemberTeam').innerHTML=tOpts;if(rtx){const u=getUser(rtx);document.getElementById('newMemberName').value=u.name;document.getElementById('newMemberRtx').value=u.rtx;document.getElementById('newMemberRtx').disabled=true;document.getElementById('newMemberRole').value=u.role;document.getElementById('newMemberTeam').value=u.teamId||'';}else{document.getElementById('newMemberName').value='';document.getElementById('newMemberRtx').value='';document.getElementById('newMemberRtx').disabled=false;document.getElementById('newMemberRole').value='member';const mt=TEAMS.find(t=>t.adminRtx===currentUser.rtx);document.getElementById('newMemberTeam').value=mt?mt.id:'';}onRoleChange();openModal('memberModal');}
+function onRoleChange(){document.getElementById('newMemberTeamGroup').style.display=document.getElementById('newMemberRole').value==='sys_admin'?'none':'block';}
+function saveMember(){const name=document.getElementById('newMemberName').value.trim(),rtx=editingMemberRtx||document.getElementById('newMemberRtx').value.trim(),role=document.getElementById('newMemberRole').value,teamId=document.getElementById('newMemberTeam').value||null;if(!name){toast('请输入姓名','error');return;}if(!rtx){toast('请输入 RTX 账号','error');return;}if(editingMemberRtx){const u=getUser(editingMemberRtx);u.name=name;u.role=role;u.teamId=teamId;toast('成员信息已更新');}else{if(getUser(rtx)){toast('该 RTX 账号已存在','error');return;}USERS.push({rtx,name,color:COLORS[USERS.length%COLORS.length],role,teamId});toast('成员已添加');}closeModal('memberModal');renderAdminPage();buildDailyFilter();buildUserMenu();}
+function deleteMember(rtx){if(rtx===currentUser.rtx){toast('不能删除当前登录账号','error');return;}if(!confirm('确认移除该成员？'))return;USERS=USERS.filter(u=>u.rtx!==rtx);toast('成员已移除');renderAdminPage();buildDailyFilter();buildUserMenu();}
+function removeFromTeam(rtx){if(!confirm('确认将该成员移出团队？'))return;const u=getUser(rtx);if(u){u.teamId=null;toast('已移出团队');}renderAdminPage();}
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click',function(e){if(e.target===this)this.classList.remove('open');}));
+// ============================================================
+// LOGIN
+// ============================================================
+function onRtxInput() {
+  const rtx = document.getElementById('loginRtx').value.trim();
+  const info = document.getElementById('loginRtxInfo');
+  const nameGroup = document.getElementById('loginNameGroup');
+  if (!rtx) { info.style.display='none'; nameGroup.style.display='none'; return; }
+  const u = getUser(rtx);
+  info.style.display = 'block';
+  if (u) {
+    // 已注册：隐藏姓名框，显示身份信息
+    nameGroup.style.display = 'none';
+    const bgColor = u.role==='sys_admin'?'var(--purple-light)':u.role==='team_admin'?'var(--orange-light)':'#f6ffed';
+    const textColor = u.role==='sys_admin'?'var(--purple)':u.role==='team_admin'?'var(--orange)':'var(--success)';
+    const bdColor = u.role==='sys_admin'?'#d3adf7':u.role==='team_admin'?'#ffd591':'#b7eb8f';
+    info.style.cssText = `display:block;margin-top:8px;padding:8px 12px;border-radius:6px;font-size:13px;background:${bgColor};border:1px solid ${bdColor};color:${textColor};`;
+    const teamName = u.teamId ? (getTeam(u.teamId)?.name || '未知团队') : '暂未分配团队';
+    info.innerHTML = `&#10003;&nbsp;已识别：<strong>${u.name}</strong>&nbsp;&nbsp;<span style="font-weight:600;">${ROLE_LABELS[u.role]}</span>&nbsp;·&nbsp;${teamName}`;
+  } else {
+    // 未注册：显示姓名输入框
+    nameGroup.style.display = 'block';
+    info.style.cssText = 'display:block;margin-top:8px;padding:8px 12px;border-radius:6px;font-size:13px;background:#fffbe6;border:1px solid #ffe58f;color:#874d00;';
+    info.innerHTML = '&#9888;&nbsp;该 RTX 未在系统中，请填写姓名完成注册（角色：普通成员）';
+  }
+}
+function buildDemoUsers() {
+  const container = document.getElementById('demoUsers');
+  container.innerHTML = USERS.map(u =>
+    `<div class="demo-user-chip" onclick="quickLogin('${u.rtx}')">
+      <div class="demo-avatar" style="background:${u.color}">${u.name[0]}</div>
+      <span>${u.name}</span>
+      <span style="color:var(--text-dis);">${ROLE_LABELS[u.role]}</span>
+    </div>`
+  ).join('');
+}
+function quickLogin(rtx) {
+  const u = getUser(rtx);
+  if (!u) return;
+  currentUser = u;
+  doLoginSuccess();
+}
+function doLogin() {
+  const rtx = document.getElementById('loginRtx').value.trim();
+  const rtxErr = document.getElementById('loginRtxErr');
+  const rtxInput = document.getElementById('loginRtx');
+  if (!rtx) {
+    rtxErr.textContent = '请输入 RTX 账号';
+    rtxErr.style.display = 'block';
+    rtxInput.classList.add('error');
+    return;
+  }
+  rtxErr.style.display = 'none';
+  rtxInput.classList.remove('error');
+
+  let u = getUser(rtx);
+  if (!u) {
+    // 未注册用户：需要填写姓名
+    const name = document.getElementById('loginName').value.trim();
+    const nameErr = document.getElementById('loginNameErr');
+    if (!name) {
+      nameErr.style.display = 'block';
+      document.getElementById('loginName').classList.add('error');
+      return;
+    }
+    nameErr.style.display = 'none';
+    document.getElementById('loginName').classList.remove('error');
+    // 创建新用户：普通成员，teamId=null（未分配团队，不可见团队数据）
+    u = { rtx, name, color: COLORS[USERS.length % COLORS.length], role: 'member', teamId: null };
+    USERS.push(u);
+    buildUserMenu(); buildDailyFilter();
+  }
+  currentUser = u;
+  doLoginSuccess();
+}
+function doLoginSuccess() {
+  // 记住登录状态
+  localStorage.setItem('wl_rtx', currentUser.rtx);
+  // 若是新注册用户，也把姓名存起来以便下次还原
+  const newUsers = USERS.filter(u => !['terrencelli','nianzhao','zhangsan','lisi','wangwu','zhaoliu','sunqi'].includes(u.rtx));
+  if (newUsers.length) localStorage.setItem('wl_new_users', JSON.stringify(newUsers));
+
+  document.getElementById('loginOverlay').classList.add('hidden');
+  document.getElementById('currentUserName').textContent = currentUser.name;
+  document.getElementById('currentUserAvatar').textContent = currentUser.name[0];
+  document.getElementById('currentUserAvatar').style.background = currentUser.color;
+  updateRoleBadge(); updateAdminNav();
+  buildUserMenu(); buildDailyFilter();
+  renderOverview(); renderDailyList(); renderWeeklyPage();
+  document.getElementById('dailyFilterDate').value = '';
+  toast(`欢迎回来，${currentUser.name}！`, 'success');
+}
+function logout() {
+  localStorage.removeItem('wl_rtx');
+  document.getElementById('loginOverlay').classList.remove('hidden');
+  document.getElementById('loginRtx').value = '';
+  document.getElementById('loginRtxErr').style.display = 'none';
+  document.getElementById('loginRtx').classList.remove('error');
+  document.getElementById('loginRtxInfo').style.display = 'none';
+  document.getElementById('loginNameGroup').style.display = 'none';
+  document.getElementById('loginName').value = '';
+  document.getElementById('userMenu').style.display = 'none';
+}
+
+(function(){
+  // 还原自注册的新用户
+  try {
+    const saved = localStorage.getItem('wl_new_users');
+    if (saved) {
+      const newUsers = JSON.parse(saved);
+      newUsers.forEach(u => { if (!getUser(u.rtx)) USERS.push(u); });
+    }
+  } catch(e) {}
+
+  buildUserMenu(); buildDemoUsers(); updateRoleBadge(); updateAdminNav();
+  document.getElementById('dailyFilterDate').value = '';
+
+  // 自动登录：读取上次登录的 RTX
+  const savedRtx = localStorage.getItem('wl_rtx');
+  if (savedRtx) {
+    const u = getUser(savedRtx);
+    if (u) {
+      currentUser = u;
+      document.getElementById('loginOverlay').classList.add('hidden');
+      document.getElementById('currentUserName').textContent = u.name;
+      document.getElementById('currentUserAvatar').textContent = u.name[0];
+      document.getElementById('currentUserAvatar').style.background = u.color;
+      updateRoleBadge(); updateAdminNav();
+      buildUserMenu(); buildDailyFilter();
+      renderOverview(); renderDailyList(); renderWeeklyPage();
+      toast(`欢迎回来，${u.name}！`, 'info');
+      return;
+    }
+  }
+  // 无记录或账号不存在：显示登录页
+})();
+</script>
+</body>
+</html>
