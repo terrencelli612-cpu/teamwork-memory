@@ -286,7 +286,7 @@ input[type="text"].full{width:100%;}
     <div class="weekly-status-bar">
       <span class="status-week" id="myWeekLabel"></span>
       <span id="weeklyStatusBadge"></span>
-      <div class="ml-auto"><button class="btn btn-primary" id="generateBtn" onclick="generateWeeklyReport()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>AI 生成周报</button></div>
+      <div class="ml-auto"><button class="btn btn-primary" id="generateBtn" onclick="openAddWeeklyModal()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>添加周报</button></div>
     </div>
     <div id="weeklyReportContent"></div>
   </div>
@@ -295,8 +295,41 @@ input[type="text"].full{width:100%;}
     <div id="adminContent"></div>
   </div>
 </div>
-<div class="modal-overlay" id="writeDailyModal"><div class="modal">
-  <div class="modal-header"><div class="modal-title" id="writeDailyTitle">填写今日日报</div><div class="modal-close" onclick="closeModal('writeDailyModal')">x</div></div>
+<!-- 添加周报-选择方式 -->
+<div class="modal-overlay" id="addWeeklyModal"><div class="modal" style="width:460px;">
+  <div class="modal-header"><div class="modal-title">添加本周周报</div><div class="modal-close" onclick="closeModal('addWeeklyModal')">x</div></div>
+  <div class="modal-body" style="padding:28px 24px;">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+      <div onclick="chooseAIGenerate()" style="border:2px solid var(--border);border-radius:12px;padding:24px 16px;text-align:center;cursor:pointer;transition:all .2s;" onmouseover="this.style.borderColor='var(--primary)';this.style.background='var(--primary-light)'" onmouseout="this.style.borderColor='var(--border)';this.style.background='#fff'">
+        <div style="font-size:28px;margin-bottom:10px;">&#10024;</div>
+        <div style="font-weight:700;font-size:14px;margin-bottom:6px;">AI 自动生成</div>
+        <div style="font-size:12px;color:var(--text-sub);line-height:1.6;">基于本周日报内容<br>自动汇总生成周报</div>
+      </div>
+      <div onclick="chooseManualWrite()" style="border:2px solid var(--border);border-radius:12px;padding:24px 16px;text-align:center;cursor:pointer;transition:all .2s;" onmouseover="this.style.borderColor='var(--primary)';this.style.background='var(--primary-light)'" onmouseout="this.style.borderColor='var(--border)';this.style.background='#fff'">
+        <div style="font-size:28px;margin-bottom:10px;">&#9997;&#65039;</div>
+        <div style="font-weight:700;font-size:14px;margin-bottom:6px;">手动填写</div>
+        <div style="font-size:12px;color:var(--text-sub);line-height:1.6;">自由编辑周报内容<br>灵活填写各项内容</div>
+      </div>
+    </div>
+  </div>
+</div></div>
+
+<!-- 手动填写周报 -->
+<div class="modal-overlay" id="manualWeeklyModal"><div class="modal">
+  <div class="modal-header"><div class="modal-title" id="manualWeeklyTitle">手动填写周报</div><div class="modal-close" onclick="closeModal('manualWeeklyModal')">x</div></div>
+  <div class="modal-body">
+    <div class="form-group"><label class="form-label">本周工作概述 <span class="required">*</span></label><textarea id="manualOverview" style="min-height:80px;" placeholder="简要描述本周主要工作内容（50字以内）"></textarea></div>
+    <div class="form-group"><label class="form-label">重点工作事项 <span class="required">*</span></label><textarea id="manualItems" style="min-height:120px;" placeholder="每行填写一条，如：&#10;1. 完成需求评审，输出需求文档&#10;2. 推进技术方案评审并达成一致"></textarea></div>
+    <div class="form-group"><label class="form-label">下周工作计划（可选）</label><textarea id="manualNextPlan" style="min-height:80px;" placeholder="简述下周主要工作计划"></textarea></div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn" onclick="closeModal('manualWeeklyModal')">取消</button>
+    <button class="btn btn-primary" onclick="saveManualWeekly()">保存草稿</button>
+    <button class="btn btn-success" onclick="saveManualWeekly(true)">保存并提交</button>
+  </div>
+</div></div>
+
+<div class="modal-overlay" id="writeDailyModal"><div class="modal">  <div class="modal-header"><div class="modal-title" id="writeDailyTitle">填写今日日报</div><div class="modal-close" onclick="closeModal('writeDailyModal')">x</div></div>
   <div class="modal-body">
     <div class="form-group"><label class="form-label">填写日期 <span class="required">*</span></label><input type="date" id="dailyDate" style="width:100%"></div>
     <div class="form-group"><label class="form-label">工作内容 <span class="required">*</span></label><textarea id="dailyContent" placeholder="请输入今日工作内容" oninput="updateCharCount()"></textarea><div class="char-count" id="charCount">0 / 1000</div></div>
@@ -337,13 +370,12 @@ input[type="text"].full{width:100%;}
 <div class="toast-container" id="toastContainer"></div>
 <script>
 let USERS=[
-  {rtx:'terrencelli',name:'Terrence',color:'#1677ff',role:'sys_admin',teamId:null},
+  {rtx:'terrencelli',name:'李子龙',color:'#1677ff',role:'sys_admin',teamId:null},
   {rtx:'nianzhao',name:'赵念',color:'#ff4d4f',role:'sys_admin',teamId:null},
-  {rtx:'zhangsan',name:'张三',color:'#52c41a',role:'team_admin',teamId:'t1'},
-  {rtx:'lisi',name:'李四',color:'#13c2c2',role:'member',teamId:'t1'},
-  {rtx:'wangwu',name:'王五',color:'#faad14',role:'member',teamId:'t1'},
-  {rtx:'zhaoliu',name:'赵六',color:'#722ed1',role:'team_admin',teamId:'t2'},
-  {rtx:'sunqi',name:'孙七',color:'#eb2f96',role:'member',teamId:'t2'},
+  {rtx:'clarajzhao',name:'赵静',color:'#52c41a',role:'team_admin',teamId:'t1'},
+  {rtx:'evanlifu',name:'付立',color:'#faad14',role:'member',teamId:'t1'},
+  {rtx:'batianllong',name:'龙洲',color:'#722ed1',role:'member',teamId:'t1'},
+  {rtx:'heileylai',name:'赖梦雨',color:'#13c2c2',role:'member',teamId:'t1'},
 ];
 let TEAMS=[
   {id:'t1',name:'产品与前端组',adminRtx:'zhangsan'},
@@ -353,21 +385,291 @@ let currentUser=USERS[0],currentWeekOffset=0,selectedMember=null,currentViewType
 let editingDailyId=null,currentWeeklyReport=null,currentTeamFilter='all';
 let editingTeamId=null,editingMemberRtx=null;
 let dailyLogs=[
-  {id:'d1',user_rtx:'zhangsan',user_name:'张三',log_date:'2026-03-24',content:'1. 参加产品需求评审，确认功能可行性\n2. 完成产品原型 V2 版本\n3. 与开发团队对齐排期',created_at:'2026-03-24 18:00',updated_at:'2026-03-24 18:00'},
-  {id:'d2',user_rtx:'zhangsan',user_name:'张三',log_date:'2026-03-25',content:'1. 修改原型，补充边界场景设计\n2. 编写需求文档 V1.0\n3. 与 UI 设计师沟通视觉风格',created_at:'2026-03-25 17:50',updated_at:'2026-03-25 17:50'},
-  {id:'d3',user_rtx:'zhangsan',user_name:'张三',log_date:'2026-03-26',content:'1. 优化原型，完成交互细节\n2. 组织技术方案评审\n3. 完成竞品分析报告',created_at:'2026-03-26 18:30',updated_at:'2026-03-26 18:30'},
-  {id:'d4',user_rtx:'zhangsan',user_name:'张三',log_date:'2026-03-27',content:'1. 完成用户需求评审，与业务方对齐\n2. 更新需求文档至 V1.1\n3. 参加团队周会，汇报进展',created_at:'2026-03-27 17:45',updated_at:'2026-03-27 18:20'},
-  {id:'d5',user_rtx:'lisi',user_name:'李四',log_date:'2026-03-24',content:'1. 完成登录模块前端开发\n2. 修复测试反馈 3 个 Bug\n3. 代码 Review',created_at:'2026-03-24 18:10',updated_at:'2026-03-24 18:10'},
-  {id:'d6',user_rtx:'lisi',user_name:'李四',log_date:'2026-03-25',content:'1. 完成首页列表组件开发\n2. 与产品对齐交互逻辑\n3. 完成设计稿 Review',created_at:'2026-03-25 18:00',updated_at:'2026-03-25 18:00'},
-  {id:'d7',user_rtx:'lisi',user_name:'李四',log_date:'2026-03-26',content:'1. 完成详情页前端开发\n2. 接入后端接口联调通过\n3. 撰写单元测试，覆盖率 80%',created_at:'2026-03-26 17:40',updated_at:'2026-03-26 17:40'},
-  {id:'d8',user_rtx:'lisi',user_name:'李四',log_date:'2026-03-27',content:'1. 完成设计稿第二版\n2. 前端性能优化，首屏加载减少 40%\n3. 参加技术方案评审',created_at:'2026-03-27 18:00',updated_at:'2026-03-27 18:00'},
-  {id:'d9',user_rtx:'wangwu',user_name:'王五',log_date:'2026-03-25',content:'1. 参加项目启动会\n2. 梳理测试用例，输出测试计划\n3. 搭建测试环境',created_at:'2026-03-25 17:30',updated_at:'2026-03-25 17:30'},
-  {id:'d10',user_rtx:'wangwu',user_name:'王五',log_date:'2026-03-26',content:'1. 执行登录模块功能测试\n2. 发现并提交 5 个缺陷\n3. 编写测试报告',created_at:'2026-03-26 18:00',updated_at:'2026-03-26 18:00'},
-  {id:'d11',user_rtx:'wangwu',user_name:'王五',log_date:'2026-03-27',content:'1. 回归测试，验证 Bug 修复\n2. 执行接口自动化测试\n3. 更新测试用例库',created_at:'2026-03-27 17:50',updated_at:'2026-03-27 17:50'},
-  {id:'d12',user_rtx:'zhaoliu',user_name:'赵六',log_date:'2026-03-25',content:'1. 制定团队质量规范\n2. 推进自动化测试框架搭建\n3. 与产品对齐验收标准',created_at:'2026-03-25 18:00',updated_at:'2026-03-25 18:00'},
-  {id:'d13',user_rtx:'zhaoliu',user_name:'赵六',log_date:'2026-03-26',content:'1. 完成质量规范文档 V1.0\n2. 评审孙七的测试用例\n3. 参加全员技术分享',created_at:'2026-03-26 17:30',updated_at:'2026-03-26 17:30'},
-  {id:'d14',user_rtx:'sunqi',user_name:'孙七',log_date:'2026-03-26',content:'1. 完成接口测试脚本编写\n2. 执行冒烟测试\n3. 输出测试报告',created_at:'2026-03-26 18:10',updated_at:'2026-03-26 18:10'},
-  {id:'d15',user_rtx:'sunqi',user_name:'孙七',log_date:'2026-03-27',content:'1. 执行全量回归测试\n2. 输出缺陷跟踪报告\n3. 完成性能测试初步分析',created_at:'2026-03-27 18:00',updated_at:'2026-03-27 18:00'},
+  {id:'xl1',user_rtx:'clarajzhao',user_name:'赵静',log_date:'2026-03-16',content:'1、针对GM开启一键拉群默认不勾选需求澄清
+2、行业变更基础系统改造会议沟通
+3、业务导数需求研发评审&交付业务（对接人：蒋欣怡）
+4、流程地图方案讨论
+5、审批流详情页增加负责人需求输出',created_at:'2026-03-16 18:00',updated_at:'2026-03-16 18:00'},
+  {id:'xl2',user_rtx:'clarajzhao',user_name:'赵静',log_date:'2026-03-17',content:'1、uin所属销售组织需求体验
+2、审批流负责人问题盘点，后续待治理
+3、发起申请页面搜索功能样式调整需求验收
+4、参与流程地图需求评审
+5、审批流&组织架构工单分析',created_at:'2026-03-17 18:00',updated_at:'2026-03-17 18:00'},
+  {id:'xl3',user_rtx:'clarajzhao',user_name:'赵静',log_date:'2026-03-18',content:'1、跟李佳业务沟通showcase新版销售组织架构
+2、审批流&组织架构需求发布
+3、uin所属销售组织授权配置
+4、云产品三部组织变更授权审批数据需求沟通
+5、在途客户报备审批流数据导出提供给业务在途客户报备及流转审批流程数据',created_at:'2026-03-18 18:00',updated_at:'2026-03-18 18:00'},
+  {id:'xl4',user_rtx:'clarajzhao',user_name:'赵静',log_date:'2026-03-25',content:'1.组织架构
+●VP线和行业聚合组织架构背景说明，当前没有L1 L2负责人字段，建议罗盘权限侧梳理哪些审批流使用这些字段。
+●参加了架构师打卡需求讨论会议，与simonyanli等人讨论架构师组织架构绑定销售&销售组织方案。
+●与jingerguo讨论新增磐石行政组织架构角色的需求，计划周五前上线。
+●针对bluefinzhao的主岗组织问题，说明销售组织架构同步自集团，无法手动调整，需销管评估修改；确认销售卡片维护状态，并请求销管确认GM的销售卡片维护。
+●销售组织架构管理者搜索功能bug修复&发布
+2. 审批流管理
+●协助lokyanchen跳过审批节点，建议替换审批人或自行通过。
+●与weiizzhang讨论审批流节点修改，确认修改不会影响已存在的审批单名称。
+●审批流新增自定义插槽需求确认挂起',created_at:'2026-03-25 18:00',updated_at:'2026-03-25 18:00'},
+  {id:'xl5',user_rtx:'clarajzhao',user_name:'赵静',log_date:'2026-03-26',content:'1、需求评审
+申请3个需求进入评审，包括审批流跳转支持、AI决策配置、行政组织架构规则设置等。
+
+2、审批流
+●云产品三部组织变更角色维护与授权审批流
+●审批流工单&业务处理
+
+
+3、组织架构
+ ●讨论海外小程序组织架构取值问题，协调开发确认拉取逻辑
+ ●解决EU区域架构师选择不到下属的问题，联系研发排查。
+ ●确认销售组织架构搜索能力修改完成，准备与销管团队宣贯。
+ ●磐石海外域名切换排期，跟进项目进展。',created_at:'2026-03-26 18:00',updated_at:'2026-03-26 18:00'},
+  {id:'xl6',user_rtx:'clarajzhao',user_name:'赵静',log_date:'2026-03-27',content:'1、组织架构
+1）售前架构师需求文档撰写：
+【【组织架构】售前架构师组织关系表增加销售组织架构、销售映射关系】
+https://tapd.woa.com/tapd_fe/69997610/story/detail/1069997610133050153
+
+2）行业运营X销售的映射关系方案讨论
+
+
+2、审批流
+1）欧洲业务中心负责人审批授权配置
+2）云产品三部审批授权方案沟通和审批数据导出支持
+3）AI辅助审批流业务方案沟通，结论：由翠兰&研发协同搭建起他agent指令（跟cream、翠兰）',created_at:'2026-03-27 18:00',updated_at:'2026-03-27 18:00'},
+  {id:'xl7',user_rtx:'terrencelli',user_name:'李子龙',log_date:'2026-03-16',content:'1.数智员工海外版问答能力发布——发布中，目前还有卡点（domain信息没传递，未验证），需今天发布。
+2. 二级行业改造，基础部分预沟通。
+3. 医疗GM消息屏蔽方案讨论—已有结论。优先调整审批免审批&拉群默认不勾选两个部分。待梳理审批流节点。预计本项工作本周可以闭环。
+4. 和杨琦对齐流程地图第一版方案沟通',created_at:'2026-03-16 18:00',updated_at:'2026-03-16 18:00'},
+  {id:'xl8',user_rtx:'terrencelli',user_name:'李子龙',log_date:'2026-03-17',content:'1. 区块链金融审批流程加签—确认并行加签方案和执行
+2. 分成销售参与流程梳理—医疗GM的方案确认，流程已经处理。
+3. 小O知识问答效果测评（含详细结论）
+4. 数智员工海外版知识问答能力发布',created_at:'2026-03-17 18:00',updated_at:'2026-03-17 18:00'},
+  {id:'xl9',user_rtx:'terrencelli',user_name:'李子龙',log_date:'2026-03-18',content:'1. 分成销售节点免审批配置（已完成✅ ）
+—免审批原则确认：与 hulizhou 确认，对于 GM 参与分成的销售节点，统一设置免审批跳过
+—授权配置执行：指导 v_shuhnwang 配置授权，基于去重后的节点清单，为 alexanderng（吳文達）设置永久免审批，已生效
+—冲突处理：处理三个审批流（投标阶段交付评审、商务非标函件审批、标书合同模板审批）的授权冲突，暂不配置
+
+2. 小o助手bot申请与开发推进
+—bot申请：已提交企业微信机器人申请，讨论可见范围设置为 CSIG 可见，并咨询测试方案
+—开发需求同步：与 lucazyli 同步 bot 开发需求，优先支持问答功能，避免不兼容组件
+后续计划：智勇将输出对应需求单
+状态：✅ 申请已提交，在审批流程中；开发需求已同步',created_at:'2026-03-18 18:00',updated_at:'2026-03-18 18:00'},
+  {id:'xl10',user_rtx:'terrencelli',user_name:'李子龙',log_date:'2026-03-19',content:'【数智员工与小O助手】
+1. 修复差旅知识库接口人信息批量更新问题 ✅
+2. 协助lucazyli推进企微bot接入数智员工需求，建议出具正式需求文档 🔄
+3. 参与讨论数智员工意图识别不稳定问题，建议ericcliu协助排查 🔄
+
+【审批流程优化】
+1. 解决代金券审批人错误问题（根因：战区信息变更），取消错误授权 ✅
+2. 分析审批流免审批提示歧义问题，建议linthygao后续优化节点名称 💡
+3. 确认资源停服流程可按UIN收入销售组织配置 ✅
+4. 与慧龙讨论审批授权规则参数管理优化方案，明确通过参数校验降低配置门槛，待下周与clarajzhao讨论 📋
+
+【组织架构管理】
+1. 协助miyaxyjiang刷新发起人组织架构数据 ✅
+2. 与hardyyhwang讨论新增分包商务/付款角色，确认可行性，待业务方整理角色定义后下周配置 ⏳
+
+【权限与配置】
+1. 协助kensonzhou处理TCI渠道销售用户组创建需求 ✅
+2. 分析CEM权限申请入口配置问题，指出需独立流程支持 📋',created_at:'2026-03-19 18:00',updated_at:'2026-03-19 18:00'},
+  {id:'xl11',user_rtx:'terrencelli',user_name:'李子龙',log_date:'2026-03-20',content:'1. 跟进lucazyli的数智员工接入方案评审进度
+2. 跟进ericcliu的数智员工意图识别排查结果
+3. 下周与clarajzhao沟通：分包角色扩展需求、审批授权规则优化方案
+4. 催促业务方整理分包角色定义信息',created_at:'2026-03-20 18:00',updated_at:'2026-03-20 18:00'},
+  {id:'xl12',user_rtx:'terrencelli',user_name:'李子龙',log_date:'2026-03-23',content:'1. ai审批流能力建设沟通，预计4月中，需协调前后端资源。过程中，还需要翠兰完成部分分析场景的agent搭建工作。
+
+2. 知识问答非经管域问题处理方案规划，确定基本方案。
+
+3. 修复审批流跳转（国内/国际站）问题，web及小程序端均发布
+
+4. 讨论cem权限入口及相关改造方案',created_at:'2026-03-23 18:00',updated_at:'2026-03-23 18:00'},
+  {id:'xl13',user_rtx:'terrencelli',user_name:'李子龙',log_date:'2026-03-24',content:'审批流系统支持
+ ⦁协助处理审批流程集成问题，指导业务团队做好上线周知和FAQ准备
+ ⦁排查移动端与PC端审批界面显示差异，定位移动端缺失确认按钮问题并推动前端修复
+ ⦁明确审批流修改按钮显示逻辑（涉及editUrl、自动化配置等）
+ ⦁协调解决审批节点L1/L2负责人数据缺失问题，推动流程改造方案确认
+ ⦁对接审批流附件上传、邮件预览、报表字段等需求，确认功能可用性
+ ⦁回复审批意见下载和数据上报相关咨询
+数智员工项目
+ ⦁确认新平台切换方案，现有A2A方式可兼容无需新建skill
+ ⦁建议将"小O问答"更名为"业务咨询"，评估对客服号无影响，提供了agent场景介绍信息。
+ ⦁协调企业机器人配置，推动测试与通讯录开放
+ ⦁申请Dify空间权限，支持审批流skill搭建',created_at:'2026-03-24 18:00',updated_at:'2026-03-24 18:00'},
+  {id:'xl14',user_rtx:'terrencelli',user_name:'李子龙',log_date:'2026-03-25',content:'1. 架构师打卡需求讨论，明确方案为在架构师表中增加销售和销售组织字段。
+
+2. 流程管理与产品协作（和静静对齐审批流新增需求）
+——审批流参数配置的后续治理规则，讨论长期治理机制
+——审批流评论功能的提醒和机制，明确功能需求和实现方式
+——存量挂起需求的评估
+
+3. 被集成项目及政企线改通路讨论，协助子怡拉通其中事项。',created_at:'2026-03-25 18:00',updated_at:'2026-03-25 18:00'},
+  {id:'xl15',user_rtx:'terrencelli',user_name:'李子龙',log_date:'2026-03-26',content:'一、经营组织变更项目推进
+1. 在基础平台执行计划群分享《行业&通路变更执行事项一览表》
+要求团队成员完善各自模块的执行计划及细项
+行业&通路变更场景-基础平台执行事项一览表
+二、审批流系统 - 配置
+1. 配置[区块链金融]分成客户审批流程,调整销售 leader 加签节点至总监级
+2. 协助 alanaxie 调整销售组织架构权限
+三、审批流系统 - 方案
+MCP 服务开发协作，和simonyanli 整理审批流 MCP 查询所需信息与 safziyzhang 讨论 MCP 服务接口鉴权方案
+确定技术方案: 重新包装一套带 OA 鉴权的接口',created_at:'2026-03-26 18:00',updated_at:'2026-03-26 18:00'},
+  {id:'xl16',user_rtx:'evanlifu',user_name:'付立',log_date:'2026-03-16',content:'1、权限系统相关的用户咨询处理4起--todo:执行完后同步用户
+--优化方向：业务页面能方便拿到使用的权限点--后续跟进
+2、权限系统26年okr与研发讲解同步
+3、权限功能优化需求再次澄清',created_at:'2026-03-16 18:00',updated_at:'2026-03-16 18:00'},
+  {id:'xl17',user_rtx:'evanlifu',user_name:'付立',log_date:'2026-03-17',content:'1、权限系统相关问题咨询、讨论、处理 5起 --todo：权限申请单驳回
+--优化方向：申请页面提示勾选的是所有范围，减少误操作；
+2、确认组织调整邮件相关部门是否对应处理完成
+--优化：自动识别组织变化，提供批量操作的功能（导入、批量新增或者ai处理？）组织调整-权限处理
+3、组织临时需求评审
+4、验收需求1，新建需求1
+todo：1）发布审批流提交',created_at:'2026-03-17 18:00',updated_at:'2026-03-17 18:00'},
+  {id:'xl18',user_rtx:'evanlifu',user_name:'付立',log_date:'2026-03-18',content:'1、问题咨询、讨论5起
+2、权限点迁移需求单输出
+3、组织双周例会',created_at:'2026-03-18 18:00',updated_at:'2026-03-18 18:00'},
+  {id:'xl19',user_rtx:'evanlifu',user_name:'付立',log_date:'2026-03-19',content:'1、权限系统相关问题咨询、讨论、处理 8起 
+2、活动需求评审，迁移需求对齐
+3）确认研发人力情况，各模块系统需求排期情况周知',created_at:'2026-03-19 18:00',updated_at:'2026-03-19 18:00'},
+  {id:'xl20',user_rtx:'evanlifu',user_name:'付立',log_date:'2026-03-20',content:'1、权限系统相关问题咨询、讨论、处理 6起 
+2、权限点迁移相关
+1）权限点需求单和研发评审
+2）二级行业改造，列表数据范围鉴权结果刷新逻辑和流程--新的技术方案进度确认',created_at:'2026-03-20 18:00',updated_at:'2026-03-20 18:00'},
+  {id:'xl21',user_rtx:'evanlifu',user_name:'付立',log_date:'2026-03-23',content:'1、权限系统相关问题咨询、讨论、处理 15起 
+2、 -梳理已有父子关系情况，确认研发脚本执行逻辑执行-有父对象的角色，需要将所有子对象也关联上来
+3、组织架构调整邮件内容确认处理',created_at:'2026-03-23 18:00',updated_at:'2026-03-23 18:00'},
+  {id:'xl22',user_rtx:'evanlifu',user_name:'付立',log_date:'2026-03-24',content:'1、权限系统相关问题咨询、讨论、处理 8起 
+2、基础组研发人力和需求排期情况核对
+3、需求评审：磐石种树活动、搜索相关需求
+todo:
+1、权限点迁移前置工作：
+- “License系统” ：技术使用，迁移到“导航”一级模块目录下，将“License系统”作为二级模块目录。 -付立与liam哥、海哥确认了可以下线
+- 权限点调用情况报表：付立补充所需字段',created_at:'2026-03-24 18:00',updated_at:'2026-03-24 18:00'},
+  {id:'xl23',user_rtx:'evanlifu',user_name:'付立',log_date:'2026-03-25',content:'1、权限系统相关问题咨询、讨论、处理 16起 
+2、确认目前前端剩余2人的排期
+3、确认 权限点迁移的事项进度
+todo:
+1、我的申请页面，申请入口 展示优化，权限相关审批流类型的有效性确认',created_at:'2026-03-25 18:00',updated_at:'2026-03-25 18:00'},
+  {id:'xl24',user_rtx:'evanlifu',user_name:'付立',log_date:'2026-03-26',content:'1、权限系统相关问题咨询、讨论、处理 7起 
+2、权限点迁移进度：本周完成前置工作，下周完成迁移
+todo:
+3、组织集中评审会议
+4、确认数智员工新需求内容，需要申请测试资源',created_at:'2026-03-26 18:00',updated_at:'2026-03-26 18:00'},
+  {id:'xl25',user_rtx:'evanlifu',user_name:'付立',log_date:'2026-03-27',content:'1、权限系统相关问题咨询、讨论、处理 8起 
+重点内容：
+2、客户360/客户详情：tab页权限异常问题排查（3.26上线“时间线tab”未配置相关权限点 以及代码bug影响）
+3、战区节点失效后，权限系统配置的数据范围值未更新的问题沟通
+4、权限对象上下级解除，研发试跑结果核对',created_at:'2026-03-27 18:00',updated_at:'2026-03-27 18:00'},
+  {id:'xl26',user_rtx:'evanlifu',user_name:'付立',log_date:'2026-03-30',content:'权限系统todo：
+1、父子权限对象解除
+2、加速方案上线
+3、 白名单--覆盖已有用户范围 showcase
+4、权限点迁移
+5、战区：刷数据
+后续优化：数据范围类型对应的值有调整时（比如战区失效），提示用户选择映射，复核后自动刷新权限数据范围值',created_at:'2026-03-30 18:00',updated_at:'2026-03-30 18:00'},
+  {id:'xl27',user_rtx:'batianllong',user_name:'龙洲',log_date:'2026-03-16',content:'1、磐石国内站crm工作台页面的卡片翻译，预计今日发布，完成上线前的配置工作
+2、已梳理国际站的直销角色未来需要自研，目前还没有的页面，预计周三跟强哥对齐
+3、体验下载合规弹窗需求，预计周三发布
+4、和运营对齐周三开启国际站用户灰度的事项，包含宣发内容，灰度用户等
+5、与国内站运营沟通新增我的活动页面逻辑，待出方案
+6、对齐项目工作台使用基础组件事项，新增项目交付工作台常用推荐
+7、拉通各个业务模块产品体验国际站问题，优化菜单/跳转等问题',created_at:'2026-03-16 18:00',updated_at:'2026-03-16 18:00'},
+  {id:'xl28',user_rtx:'batianllong',user_name:'龙洲',log_date:'2026-03-17',content:'已会议对齐个人中心整体方案与设计，待处理遗留项
+正在梳理工作台和卡片配置现有逻辑及问题，优化成一套支持后续接入的标准化配置
+优化人力盘点导入问题，已提单https://tapd.woa.com/tapd_fe/69997610/story/detail/1069997610132750255
+磐石用户体验3个问题，已提单https://tapd.woa.com/tapd_fe/69997610/story/detail/1069997610132767440',created_at:'2026-03-17 18:00',updated_at:'2026-03-17 18:00'},
+  {id:'xl29',user_rtx:'batianllong',user_name:'龙洲',log_date:'2026-03-18',content:'1、国际站相关需求：已上线并已向各个业务模块产品灰度，对体验问题已修改，预计周三开始灰度用户，灰度方案各角色国内海外LTC作业流程系统对比
+2、已梳理国际站直销角色需要功能但目前还未自研的功能，预计周三与强哥对后续计划
+3、个人中心整体优化，已经和设计对过一版方案，确定一些修改内容，预计本周和念姐过完整方案
+4、对齐项目经理工作台事项，新增项目交付工作台常用推荐，目前进展是crm工作台的项目经理板块还在开发中
+5、工作台和卡片后台配置优化：梳理现有方案存在的问题（包含字段类型报错、体验问题、双端配置耦合的问题），小程序希望能接入新的发起申请板块支持后台配置，优化成一套支持后续接入的通用配置方案',created_at:'2026-03-18 18:00',updated_at:'2026-03-18 18:00'},
+  {id:'xl30',user_rtx:'batianllong',user_name:'龙洲',log_date:'2026-03-19',content:'1、国际站相关需求：和公有云订单管理产品沟通国际站待上线菜单
+2、个人中心整体优化方案梳理，持续修改中，预计本周和念姐过完整方案
+3、工作台和卡片后台配置优化：梳理现有方案存在的问题（包含字段类型报错、体验问题、双端配置耦合的问题），小程序希望能接入新的发起申请板块支持后台配置，优化成一套支持后续接入的通用配置方案
+4、新增反馈按流程触发需求',created_at:'2026-03-19 18:00',updated_at:'2026-03-19 18:00'},
+  {id:'xl31',user_rtx:'batianllong',user_name:'龙洲',log_date:'2026-03-20',content:'1、个人中心整体优化方案梳理，持续修改中，周五
+2、工作台和卡片后台配置优化：梳理现有方案存在的问题（包含字段类型报错、体验问题、双端配置耦合的问题），小程序希望能接入新的发起申请板块支持后台配置，优化成一套支持后续接入的通用配置方案
+3、新增反馈按流程触发需求',created_at:'2026-03-20 18:00',updated_at:'2026-03-20 18:00'},
+  {id:'xl32',user_rtx:'batianllong',user_name:'龙洲',log_date:'2026-03-23',content:'1、工作台和卡片后台配置优化：梳理现有方案存在的问题（包含字段类型报错、体验问题、双端配置耦合的问题），小程序希望能接入新的发起申请板块支持后台配置，优化成一套支持后续接入的通用配置方案
+2、新增反馈按流程触发需求
+3、人力盘点导入报错',created_at:'2026-03-23 18:00',updated_at:'2026-03-23 18:00'},
+  {id:'xl33',user_rtx:'batianllong',user_name:'龙洲',log_date:'2026-03-24',content:'1、工作台和卡片后台配置优化：梳理现有方案存在的问题（包含字段类型报错、体验问题、双端配置耦合的问题），小程序希望能接入新的发起申请板块支持后台配置，优化成一套支持后续接入的通用配置方案
+2、写反馈按流程触发需求
+3、人力盘点处理导入报错问题
+4、项目经理工作台嵌入，和项目交付产品对接
+5、国际站缺乏英文版的页面梳理',created_at:'2026-03-24 18:00',updated_at:'2026-03-24 18:00'},
+  {id:'xl34',user_rtx:'batianllong',user_name:'龙洲',log_date:'2026-03-25',content:'1、工作台和卡片后台配置优化：梳理现有方案存在的问题（包含字段类型报错、体验问题、双端配置耦合的问题），小程序希望能接入新的发起申请板块支持后台配置，优化成一套支持后续接入的通用配置方案
+2、项目经理工作台嵌入，和项目交付产品及研发对接
+3、处理渠道经理产品提出的国际站缺少内容问题，遗留3个问题跟进中，待产品确认后续上线功能
+4、与分包管理产品沟通国际站缺少内容问题，讲解新国际站结构层级，新增2项功能
+5、跟进销售易迁移的事项进展',created_at:'2026-03-25 18:00',updated_at:'2026-03-25 18:00'},
+  {id:'xl35',user_rtx:'batianllong',user_name:'龙洲',log_date:'2026-03-26',content:'1、梳理国际站缺乏英文版的页面
+2、工作台和卡片后台配置优化：梳理现有方案存在的问题（包含字段类型报错、体验问题、双端配置耦合的问题），小程序希望能接入新的发起申请板块支持后台配置，优化成一套支持后续接入的通用配置方案
+3、体验项目经理的工作台控权',created_at:'2026-03-26 18:00',updated_at:'2026-03-26 18:00'},
+  {id:'xl36',user_rtx:'batianllong',user_name:'龙洲',log_date:'2026-03-27',content:'1、和运营对齐反馈增加流程节点的需求详细内容
+2、梳理国际站缺乏英文版的页面
+3、待办的历史数据量大，按年增加标签，只展示近一年的数据
+4、工作台和卡片后台配置优化：梳理现有方案存在的问题（包含字段类型报错、体验问题、双端配置耦合的问题），小程序希望能接入新的发起申请板块支持后台配置，优化成一套支持后续接入的通用配置方案
+5、体验项目经理的工作台控权',created_at:'2026-03-27 18:00',updated_at:'2026-03-27 18:00'},
+  {id:'xl37',user_rtx:'heileylai',user_name:'赖梦雨',log_date:'2026-03-16',content:'1、【消息中心】运营 - 产品能力关系梳理---消息中心产品能力与运营关系梳理，预计本周内汇报
+2、【消息中心】---【【消息中心】国际站消息推送能力搭建】
+https://tapd.woa.com/tapd_fe/69997610/story/detail/1069997610131364887跟研发确认方案；以及同步开发完成时间，确保3月底前完成；
+3、【消息中心】---bug排查，推送记录查询报错，原因已定位---
+4、数据合规弹窗配置--需求策划中，周期性发布；
+6、【云资产】离职用户问题跟进50人+，问题处理20+
+7、【云资产】用户abeljiehu离职，未交接云资产，未走离职系统原因排查---排查中，待跟进',created_at:'2026-03-16 18:00',updated_at:'2026-03-16 18:00'},
+  {id:'xl38',user_rtx:'heileylai',user_name:'赖梦雨',log_date:'2026-03-17',content:'1、需求体验，消息同步优化已发布
+2、一键拉群拉入智能机器人---能力调研，暂不支持一键拉群直接拉进去，是根据已有群id才能加入，微信侧能力支持时间暂不确定；跟研发讨论方案是否可以使用工作流拉进群
+3、消息推送记录---云api改造讨论，是否需要提供云api供各业务团队使用
+4、资源位管理线上化
+5、https://andon.woa.com/ticket/detail?id=16423133&sign=56bd912084d9db61cc5f8bdf92f4b944工单---权限相关
+6、消息中心产品能力与运营关系梳理
+7、离职用户问题跟进',created_at:'2026-03-17 18:00',updated_at:'2026-03-17 18:00'},
+  {id:'xl39',user_rtx:'heileylai',user_name:'赖梦雨',log_date:'2026-03-18',content:'1、自动拉群加入机器人需求策划
+2、周期性公告生效需求策划
+3、海外云资产数据迁移：交付项目时间确认----已确认依赖，已经ready可直接调用海外接口
+4、运营-产品能力关系梳理',created_at:'2026-03-18 18:00',updated_at:'2026-03-18 18:00'},
+  {id:'xl40',user_rtx:'heileylai',user_name:'赖梦雨',log_date:'2026-03-19',content:'1、云资产交接特殊case处理，10+起
+2、消息中心产品能力与运营关系，方案设计梳理，预计明天汇报
+3、存量模版治理方案梳理
+4、富文本编辑器优化需求讨论
+5、消息同步报错处理
+6、磐石宣发平台快速实现方案讨论',created_at:'2026-03-19 18:00',updated_at:'2026-03-19 18:00'},
+  {id:'xl41',user_rtx:'heileylai',user_name:'赖梦雨',log_date:'2026-03-20',content:'1、磐石宣发平台方案汇报:遗留to do：按照方案推进，单独约会澄清功能待修改点
+2、需求策划：
+3、云资产交接特殊case处理，10+起
+5、富文本编辑器优化需求策划',created_at:'2026-03-20 18:00',updated_at:'2026-03-20 18:00'},
+  {id:'xl42',user_rtx:'heileylai',user_name:'赖梦雨',log_date:'2026-03-23',content:'1、与seanzqxiao(肖泽强)沟通消息中心接口申请细节，确定使用签名校验方式，并完成应用创建和Token配置
+2、处理云资产审批/咨询，20+起
+3、新需求：异动拉双方销管（待评估）
+4、【【云资产】一键拉群加入智能机器人】
+https://tapd.woa.com/tapd_fe/69997610/story/detail/1069997610132783479
+5、【富文本编辑器优化】
+https://tapd.woa.com/tapd_fe/69997610/story/detail/1069997610132848451
+6、【【消息中心】公告配置周期性生效功能】
+https://tapd.woa.com/tapd_fe/69997610/story/detail/1069997610132783645',created_at:'2026-03-23 18:00',updated_at:'2026-03-23 18:00'},
+  {id:'xl43',user_rtx:'heileylai',user_name:'赖梦雨',log_date:'2026-03-24',content:'1、公告生效：国际站和国内站均显示需优化改进；当前国内站与国际站相同路由生效的逻辑。（资源紧张）
+2、需求体验：消息国际站同步至海外，后续督促业务来切换，体验中，预计本周可发布；
+3、接收kikiqihu(胡琪)同步的关于资源位管理线上化（宣发平台）的体验反馈文档；结合文档策划方案，预计本周约时间讨论细节
+4、处理云资产审批/咨询，20+起',created_at:'2026-03-24 18:00',updated_at:'2026-03-24 18:00'},
+  {id:'xl44',user_rtx:'heileylai',user_name:'赖梦雨',log_date:'2026-03-25',content:'1. 国际站消息推送与公告配置
+ ⦁推进国际站消息推送能力搭建，与earthywu(武沛鑫)确认国际站域名修改及海外环境编辑功能。￼￼￼
+ ⦁处理国际站公告同步问题，与lynali(李恝)、weiizzhang(张伟)讨论并临时屏蔽特定国际站Tips公告
+ ⦁更新海外邮件合规推送指南，并与seanzqxiao(肖泽强)同步海外邮件发送指引内容。海外邮件合规推送指南
+2、处理云资产审批/咨询，20+起
+3、资源位管理线上化（宣发平台）需求策划',created_at:'2026-03-25 18:00',updated_at:'2026-03-25 18:00'},
+  {id:'xl45',user_rtx:'heileylai',user_name:'赖梦雨',log_date:'2026-03-26',content:'1、消息中心
+ ⦁与earthywu一起海外消息模板页面发布，并确认国际站菜单配置需求。 ￼￼
+ ⦁与seanzqxiao讨论海外消息发送的同步模式参数配置，加入指引。 ￼
+海外邮件合规下周启动；￼ ￼￼
+2、资源位线上化，方案策划完成，明天跟运营讨论细节【【资源位管理线上化】】
+https://tapd.woa.com/tapd_fe/69997610/story/detail/1069997610132923369
+3、公告配置：【【消息中心】国际站公告配置优化】
+https://tapd.woa.com/tapd_fe/69997610/story/detail/1069997610132977701',created_at:'2026-03-26 18:00',updated_at:'2026-03-26 18:00'},
+  {id:'xl46',user_rtx:'heileylai',user_name:'赖梦雨',log_date:'2026-03-27',content:'1、宣发平台（一期）建设对齐会议
+ ⦁主持会议讨论排期发布流程线上化的需求设计，包括流程状态、AI功能集成、驳回优化、权限管理等。￼
+ ⦁明确后续需确认字段、AI检验内容、机器人文案等细节，并由kikiqihu(胡琪)和v_liuzfang(房柳珠)确认。￼￼
+ ⦁计划下周进行需求评审，并确定资源排期
+2、消息中心海外站今日已完成发布，下周开始推动业务迁移
+3、周报周报  2026.03.23 - 2026.03.27',created_at:'2026-03-27 18:00',updated_at:'2026-03-27 18:00'},
 ];
 let weeklyReports=[
   {id:'w1',user_rtx:'lisi',user_name:'李四',week_start:'2026-03-24',week_end:'2026-03-30',overview:'本周完成了登录模块、首页列表及详情页的前端开发，联调通过并完成性能优化。',items:['完成登录模块、列表页、详情页前端开发','前端性能优化，首屏加载时间减少 40%','完成设计稿 Review 及第二版输出','代码 Review，保障代码质量'],nextPlan:'下周完成搜索功能开发，推进整体功能联调',status:'submitted',is_ai_generated:true,submitted_at:'2026-03-27 19:30',created_at:'2026-03-27 19:00',updated_at:'2026-03-27 19:30'},
@@ -419,8 +721,37 @@ function deleteDaily(id){const log=dailyLogs.find(l=>l.id===id);if(!log||log.use
 function saveDaily(){const date=document.getElementById('dailyDate').value,content=document.getElementById('dailyContent').value.trim();if(!date){toast('请选择日期','error');return;}if(!content){toast('请填写工作内容','error');return;}const now=nt();if(editingDailyId){const idx=dailyLogs.findIndex(l=>l.id===editingDailyId);if(idx!==-1){dailyLogs[idx].content=content;dailyLogs[idx].log_date=date;dailyLogs[idx].updated_at=now;toast('日报已更新');}}else{if(dailyLogs.find(l=>l.user_rtx===currentUser.rtx&&l.log_date===date)){toast('该日期已有日报','error');return;}dailyLogs.push({id:'d'+gid(),user_rtx:currentUser.rtx,user_name:currentUser.name,log_date:date,content,created_at:now,updated_at:now});toast('日报保存成功');}closeModal('writeDailyModal');renderDailyList();}
 function updateCharCount(){document.getElementById('charCount').textContent=`${document.getElementById('dailyContent').value.length} / 1000`;}
 function renderWeeklyPage(){const r=gwr(0);document.getElementById('myWeekLabel').textContent=`第${r.weekNum}周（${r.start} ~ ${r.end}）`;const rep=weeklyReports.find(r2=>r2.user_rtx===currentUser.rtx&&r2.week_start===r.start);currentWeeklyReport=rep||null;const badge=document.getElementById('weeklyStatusBadge');badge.innerHTML=!rep?'<span class="badge badge-default">未生成</span>':rep.status==='submitted'?'<span class="badge badge-success">&#10003; 已提交</span>':'<span class="badge badge-warning">草稿</span>';const area=document.getElementById('weeklyReportContent');if(!rep){area.innerHTML=`<div class="weekly-report-card"><div class="empty-state" style="padding:60px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><p>本周暂未生成周报</p><p style="font-size:12px;">点击上方按钮，AI 将基于本周日报自动生成</p></div></div>`;}else renderWeeklyCard(rep,area);}
-function renderWeeklyCard(rep,area){const is=rep.status==='submitted';area.innerHTML=`<div class="weekly-report-card"><div class="weekly-report-header"><div class="member-avatar" style="background:${currentUser.color}">${currentUser.name[0]}</div><span style="font-weight:600;font-size:15px;">${currentUser.name}（${currentUser.rtx}）</span>${rep.is_ai_generated?'<span class="badge badge-primary">AI 生成</span>':''}<span class="ml-auto text-sm" style="color:var(--text-sub);">生成：${rep.created_at}</span></div><div class="weekly-report-body"><div class="report-section"><div class="report-section-title">本周工作概述</div><div class="report-overview-text">${rep.overview}</div></div><div class="report-section"><div class="report-section-title">重点工作事项</div><ul class="report-item-list">${rep.items.map((item,i)=>`<li><span class="report-item-num">${i+1}</span><span>${item}</span></li>`).join('')}</ul></div>${rep.nextPlan?`<div class="report-section"><div class="report-section-title">下周工作计划</div><div class="report-overview-text">${rep.nextPlan}</div></div>`:''}</div><div class="report-footer"><button class="btn" onclick="generateWeeklyReport()">重新生成</button><button class="btn" onclick="openEditWeekly()">编辑</button>${!is?`<button class="btn btn-success" onclick="submitWeekly()">提交周报</button>`:`<button class="btn btn-danger" onclick="revokeWeekly()">撤回</button>`}</div></div>`;}
-function generateWeeklyReport(){const r=gwr(0),ml=dailyLogs.filter(l=>l.user_rtx===currentUser.rtx&&dir(l.log_date,r.start,r.end));if(!ml.length){toast('本周暂无日报，无法生成周报','error');return;}document.getElementById('weeklyReportContent').innerHTML=`<div class="weekly-report-card"><div class="generating-animation"><div class="spinner"></div><span>AI 正在分析本周日报，生成周报中...</span></div></div>`;document.getElementById('generateBtn').disabled=true;setTimeout(()=>{document.getElementById('generateBtn').disabled=false;const om={zhangsan:'本周完成需求评审与产品原型设计，组织技术方案评审并与各方对齐，输出完整需求文档。',lisi:'本周完成登录模块、列表页、详情页前端开发，通过联调并进行性能优化，效果显著。',wangwu:'本周完成测试环境搭建及功能测试，发现并跟进多个缺陷修复，输出详细测试报告。',zhaoliu:'本周完成质量规范文档制定，推进自动化框架搭建，组织质量标准对齐会。',sunqi:'本周完成接口测试脚本编写及全量回归测试，输出缺陷跟踪和性能测试报告。'};const items=[];ml.forEach(log=>{const l=log.content.split('\n').filter(Boolean);if(l[0]){const c=l[0].replace(/^\d+\.\s*/,'').trim();if(c&&!items.includes(c))items.push(c);}});const now=nt();weeklyReports=weeklyReports.filter(rep=>!(rep.user_rtx===currentUser.rtx&&rep.week_start===r.start));const nr={id:'w'+gid(),user_rtx:currentUser.rtx,user_name:currentUser.name,week_start:r.start,week_end:r.end,overview:om[currentUser.rtx]||`本周完成了${ml.length}天工作记录。`,items:items.slice(0,5),nextPlan:'持续推进项目开发，完成下周排期内的功能交付',status:'draft',is_ai_generated:true,submitted_at:null,created_at:now,updated_at:now};weeklyReports.push(nr);currentWeeklyReport=nr;document.getElementById('weeklyStatusBadge').innerHTML='<span class="badge badge-warning">草稿</span>';renderWeeklyCard(nr,document.getElementById('weeklyReportContent'));toast('AI 周报生成成功，请确认后提交');},2200);}
+function renderWeeklyCard(rep,area){const is=rep.status==='submitted';area.innerHTML=`<div class="weekly-report-card"><div class="weekly-report-header"><div class="member-avatar" style="background:${currentUser.color}">${currentUser.name[0]}</div><span style="font-weight:600;font-size:15px;">${currentUser.name}（${currentUser.rtx}）</span>${rep.is_ai_generated?'<span class="badge badge-primary">AI 生成</span>':''}<span class="ml-auto text-sm" style="color:var(--text-sub);">生成：${rep.created_at}</span></div><div class="weekly-report-body"><div class="report-section"><div class="report-section-title">本周工作概述</div><div class="report-overview-text">${rep.overview}</div></div><div class="report-section"><div class="report-section-title">重点工作事项</div><ul class="report-item-list">${rep.items.map((item,i)=>`<li><span class="report-item-num">${i+1}</span><span>${item}</span></li>`).join('')}</ul></div>${rep.nextPlan?`<div class="report-section"><div class="report-section-title">下周工作计划</div><div class="report-overview-text">${rep.nextPlan}</div></div>`:''}</div><div class="report-footer"><button class="btn" onclick="openAddWeeklyModal()">重新生成/编辑</button>${!is?`<button class="btn btn-success" onclick="submitWeekly()">提交周报</button>`:`<button class="btn btn-danger" onclick="revokeWeekly()">撤回</button>`}</div></div>`;}
+function openAddWeeklyModal(){openModal('addWeeklyModal');}
+function chooseAIGenerate(){closeModal('addWeeklyModal');generateWeeklyReport();}
+function chooseManualWrite(){
+  closeModal('addWeeklyModal');
+  // 若已有周报，预填内容
+  const r=gwr(0);
+  const rep=weeklyReports.find(r2=>r2.user_rtx===currentUser.rtx&&r2.week_start===r.start);
+  document.getElementById('manualWeeklyTitle').textContent = rep ? '编辑周报' : '手动填写周报';
+  document.getElementById('manualOverview').value = rep ? rep.overview : '';
+  document.getElementById('manualItems').value = rep ? rep.items.join('\n') : '';
+  document.getElementById('manualNextPlan').value = rep ? (rep.nextPlan||'') : '';
+  openModal('manualWeeklyModal');
+}
+function saveManualWeekly(andSubmit=false){
+  const overview=document.getElementById('manualOverview').value.trim();
+  const itemsRaw=document.getElementById('manualItems').value.trim();
+  const nextPlan=document.getElementById('manualNextPlan').value.trim();
+  if(!overview){toast('请填写本周工作概述','error');return;}
+  if(!itemsRaw){toast('请填写重点工作事项','error');return;}
+  const r=gwr(0);const now=nt();
+  const items=itemsRaw.split('\n').map(l=>l.replace(/^\d+[\.\、]\s*/,'').trim()).filter(Boolean);
+  weeklyReports=weeklyReports.filter(rep=>!(rep.user_rtx===currentUser.rtx&&rep.week_start===r.start));
+  const nr={id:'w'+gid(),user_rtx:currentUser.rtx,user_name:currentUser.name,week_start:r.start,week_end:r.end,overview,items,nextPlan,status:andSubmit?'submitted':'draft',is_ai_generated:false,submitted_at:andSubmit?now:null,created_at:now,updated_at:now};
+  weeklyReports.push(nr);currentWeeklyReport=nr;
+  document.getElementById('weeklyStatusBadge').innerHTML=andSubmit?'<span class="badge badge-success">&#10003; 已提交</span>':'<span class="badge badge-warning">草稿</span>';
+  renderWeeklyCard(nr,document.getElementById('weeklyReportContent'));
+  closeModal('manualWeeklyModal');
+  toast(andSubmit?'周报已提交':'周报草稿已保存');
+}
+function generateWeeklyReport(){const r=gwr(0),ml=dailyLogs.filter(l=>l.user_rtx===currentUser.rtx&&dir(l.log_date,r.start,r.end));if(!ml.length){toast('本周暂无日报，无法 AI 生成，请选择手动填写','error');return;}document.getElementById('weeklyReportContent').innerHTML=`<div class="weekly-report-card"><div class="generating-animation"><div class="spinner"></div><span>AI 正在分析本周日报，生成周报中...</span></div></div>`;document.getElementById('generateBtn').disabled=true;setTimeout(()=>{document.getElementById('generateBtn').disabled=false;const om={zhangsan:'本周完成需求评审与产品原型设计，组织技术方案评审并与各方对齐，输出完整需求文档。',lisi:'本周完成登录模块、列表页、详情页前端开发，通过联调并进行性能优化，效果显著。',wangwu:'本周完成测试环境搭建及功能测试，发现并跟进多个缺陷修复，输出详细测试报告。',zhaoliu:'本周完成质量规范文档制定，推进自动化框架搭建，组织质量标准对齐会。',sunqi:'本周完成接口测试脚本编写及全量回归测试，输出缺陷跟踪和性能测试报告。'};const items=[];ml.forEach(log=>{const l=log.content.split('\n').filter(Boolean);if(l[0]){const c=l[0].replace(/^\d+\.\s*/,'').trim();if(c&&!items.includes(c))items.push(c);}});const now=nt();weeklyReports=weeklyReports.filter(rep=>!(rep.user_rtx===currentUser.rtx&&rep.week_start===r.start));const nr={id:'w'+gid(),user_rtx:currentUser.rtx,user_name:currentUser.name,week_start:r.start,week_end:r.end,overview:om[currentUser.rtx]||`本周完成了${ml.length}天工作记录。`,items:items.slice(0,5),nextPlan:'持续推进项目开发，完成下周排期内的功能交付',status:'draft',is_ai_generated:true,submitted_at:null,created_at:now,updated_at:now};weeklyReports.push(nr);currentWeeklyReport=nr;document.getElementById('weeklyStatusBadge').innerHTML='<span class="badge badge-warning">草稿</span>';renderWeeklyCard(nr,document.getElementById('weeklyReportContent'));toast('AI 周报生成成功，请确认后提交');},2200);}
 function submitWeekly(){if(!currentWeeklyReport)return;const idx=weeklyReports.findIndex(r=>r.id===currentWeeklyReport.id);if(idx!==-1){weeklyReports[idx].status='submitted';weeklyReports[idx].submitted_at=nt();weeklyReports[idx].updated_at=weeklyReports[idx].submitted_at;currentWeeklyReport=weeklyReports[idx];document.getElementById('weeklyStatusBadge').innerHTML='<span class="badge badge-success">&#10003; 已提交</span>';renderWeeklyCard(currentWeeklyReport,document.getElementById('weeklyReportContent'));toast('周报已提交，团队成员可在"工作一览"中查看');}}
 function revokeWeekly(){if(!currentWeeklyReport||!confirm('确认撤回周报？'))return;const idx=weeklyReports.findIndex(r=>r.id===currentWeeklyReport.id);if(idx!==-1){weeklyReports[idx].status='draft';weeklyReports[idx].submitted_at=null;currentWeeklyReport=weeklyReports[idx];document.getElementById('weeklyStatusBadge').innerHTML='<span class="badge badge-warning">草稿</span>';renderWeeklyCard(currentWeeklyReport,document.getElementById('weeklyReportContent'));toast('周报已撤回为草稿状态','info');}}
 function openEditWeekly(){if(!currentWeeklyReport)return;document.getElementById('editOverview').value=currentWeeklyReport.overview;document.getElementById('editItems').value=currentWeeklyReport.items.join('\n');document.getElementById('editNextPlan').value=currentWeeklyReport.nextPlan||'';openModal('editWeeklyModal');}
